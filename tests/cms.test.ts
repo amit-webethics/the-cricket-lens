@@ -30,3 +30,5 @@ test('PostgreSQL admin publishing lifecycle',async t=>{
  await t.test('unpublishing removes articles from public results',async()=>{await store.saveEntry('articles',{...article.data,status:'draft'},article.id,article.revision);assert.equal((await store.listEntries('articles',true)).length,0);});
  await t.test('expired sessions are denied and login attempts are throttled',async()=>{await engine.exec("UPDATE cms_sessions SET expires_at=now()-interval '1 second'");assert.equal(await validSession(token,()=>sql),false);for(let i=0;i<10;i++)await login('editor@example.com','wrong',()=>sql);await assert.rejects(login('editor@example.com','wrong',()=>sql),/RATE_LIMIT/);});
 });
+
+test('missing admin configuration fails closed even with a session token',async()=>{const saved=process.env.ADMIN_PASSWORD_HASH;try{delete process.env.ADMIN_PASSWORD_HASH;assert.equal(await validSession('a'.repeat(64),()=>{throw new Error('Database should not be queried')}),false);}finally{process.env.ADMIN_PASSWORD_HASH=saved;}});

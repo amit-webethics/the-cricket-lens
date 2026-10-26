@@ -6,7 +6,7 @@ export type PublicArticle=Article&{author?:string;authorBio?:string;authorRole?:
 export const publicContent=cache(async()=>{if(process.env.NEXT_STATIC_REVIEW!=='1')await connection();
  if(!process.env.DATABASE_URL)return {articles:samples as PublicArticle[],news:[] as any[],categories:['Match Reports','Match Previews','Player Analysis','Opinions & Explainers'],pages:[] as any[],settings:null as any,sample:true};
  const [stories,news,categories,authors,pages,settings]=await Promise.all(['articles','news','categories','authors','pages','settings'].map(k=>listEntries(k as any,true)));
- const articles:PublicArticle[]=stories.map(e=>{const d=e.data;const author=authors.find(a=>a.id===d.authorId);return {...d,slug:e.slug,title:e.title,category:categories.find(c=>c.id===d.categoryId)?.title||'Cricket',author:author?.title||'The Cricket Lens',authorRole:author?.data.role||'',authorBio:author?.data.bio||'',publishedAt:e.publishedAt,updatedAt:e.updatedAt,art:'stadium'} as PublicArticle});
+ const articles:PublicArticle[]=stories.map(e=>{const d=e.data;const author=authors.find(a=>a.id===d.authorId);return {...d,slug:e.slug,title:e.title,category:categories.find(c=>c.id===d.categoryId)?.title||'Cricket',author:author?.title||'The Cricket Lens',authorRole:author?.data.role||'',authorBio:author?.data.bio||'',publishedAt:e.publishedAt,updatedAt:e.updatedAt,art:d.art||'stadium'} as PublicArticle});
  articles.sort((a,b)=>Number(b.featured)-Number(a.featured));
  return {articles,news:news.map(n=>({...n.data,publishedAt:n.publishedAt})),categories:categories.map(c=>c.title),pages:pages.map(p=>({...p.data,updatedAt:p.updatedAt})),settings:settings[0]?.data||null,sample:false};
 });

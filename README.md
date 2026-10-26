@@ -27,7 +27,7 @@ The migration creates four categories, one author, default publication settings,
 
 ## Static review deployment
 
-The current ChatGPT Sites URL remains an owner-private static review. It cannot run the Node PostgreSQL API. `npm run build:review` creates a separate, temporary build with APIs excluded and database access disabled; its `out/` contains the review. Forms can be inspected but all saving/uploading/publishing is disabled, clearly labelled as setup required. Content typed in this review is not saved.
+The current ChatGPT Sites URL remains an owner-private static review. It cannot run the Node PostgreSQL API. `npm run build:review` creates a separate, temporary build with APIs excluded and database access disabled; its `out/` contains the review. The static review exposes only a locked admin sign-in page; it never exposes the editorial workspace.
 
 The `.openai/hosting.json` static `out` configuration belongs only to that review host. The production source remains a full server-rendered Next.js application for Vercel. No PostgreSQL connection or Vercel deployment has been configured in this session.
 
@@ -38,3 +38,9 @@ The `.openai/hosting.json` static `out` configuration belongs only to that revie
 - `npm run test:cms` runs the repository SQL, validation and auth tests using PGlite's in-process WASM PostgreSQL engine and a tagged-query adapter. It uses a temporary in-memory test database, never the production DATABASE_URL. This verifies the SQL repository, validation, authentication and request rejection behaviour. The production PostgreSQL driver, provider/TLS connection, authenticated HTTP writes and media upload transport still require verification against the selected service.
 
 The API has no hard-delete endpoint. Unpublish or archive content to preserve editorial history. This initial admin supports one configured admin account; author profiles are bylines, not separate login accounts. Policies remain drafts until reviewed by the operator, and indexing remains disabled until public launch is authorised.
+
+## Import existing website content
+
+Run `npm run db:import` with DATABASE_URL set to import missing categories, author, site settings, five sample articles and six information pages. Articles and pages are imported as drafts for editorial review; no unverified reports or policy drafts are automatically published. The import is transactional and idempotent: existing records are preserved.
+
+Every editorial page is protected by the server-side `(protected)` layout. Missing credentials, missing sessions, expired sessions and database failures redirect to `/admin/login/`. The API separately verifies sessions on every protected request. No setup-preview bypass is available on production or the static review. Configure ADMIN_EMAIL and ADMIN_PASSWORD_HASH in Vercel before signing in.

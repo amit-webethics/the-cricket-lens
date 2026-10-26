@@ -10,7 +10,8 @@
     "db:migrate": "node --import tsx scripts/migrate.ts",
     "admin:password": "node scripts/hash-password.mjs",
     "build:review": "node scripts/build-review.mjs",
-    "test:cms": "node --import tsx --test tests/cms.test.ts"
+    "test:cms": "node --import tsx --test tests/cms.test.ts",
+    "db:import": "node --import tsx scripts/import-content.ts"
   },
   "dependencies": {
     "next": "16.4.2",
