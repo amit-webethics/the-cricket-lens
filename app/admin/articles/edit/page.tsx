@@ -1,0 +1,1 @@
+import {Suspense} from 'react';import Editor from '../../../../components/admin/Editor';export default function Page(){return <Suspense fallback={<p>Opening editor…</p>}><Editor kind="articles"/></Suspense>}

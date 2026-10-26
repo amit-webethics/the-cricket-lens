@@ -1,0 +1,31 @@
+{
+  "name": "the-cricket-lens",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "next build --webpack",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node --import tsx scripts/migrate.ts",
+    "admin:password": "node scripts/hash-password.mjs",
+    "build:review": "node scripts/build-review.mjs",
+    "test:cms": "node --import tsx --test tests/cms.test.ts"
+  },
+  "dependencies": {
+    "next": "16.4.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "lucide-react": "^0.468.0",
+    "postgres": "^3.4.7",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsx": "^4.20.0",
+    "@electric-sql/pglite": "^0.5.11"
+  }
+}

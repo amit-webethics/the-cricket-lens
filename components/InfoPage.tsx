@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function InfoPage({label,title,intro,sections}:{label:string;title:string;intro:string;sections:{heading:string;body:string}[]}){return <main id="main" className="info-page"><Link className="back-link" href="/">← Back to home</Link><div className="eyebrow">{label}</div><h1>{title}</h1><p className="standfirst">{intro}</p>{sections.map(s=><section key={s.heading}><h2>{s.heading}</h2><p>{s.body}</p></section>)}<Link className="text-button" href="/#stories">Explore the stories ↗</Link></main>}

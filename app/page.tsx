@@ -1,0 +1,2 @@
+import {Suspense} from 'react';import Home from '../components/Home';import {publicContent} from '../lib/cms/public';
+export default async function Page(){const content=await publicContent();return <Suspense fallback={<main id="main" className="loading">Opening the Lens…</main>}><Home articles={content.articles} categories={content.categories} news={content.news} sample={content.sample}/></Suspense>}
