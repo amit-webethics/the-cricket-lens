@@ -23,7 +23,7 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
       <div className="eyebrow"><span>{a.series||a.category}</span>{a.label&&<span className="draft-pill">DRAFT FOR REVIEW</span>}</div>
       <h1>{a.title}</h1>
       <div className="article-meta"><span>by <b>{a.author||'The Cricket Lens'}</b></span>{date&&<><span aria-hidden="true">•</span><time dateTime={a.publishedAt}>Published on {publishedDate} <span aria-hidden="true">•</span> {publishedTime} IST</time></>}<span aria-hidden="true">•</span><span>{a.minutes} min read</span></div>
-      <p className="standfirst">{a.description}</p>{a.scorecard&&<Link className="scorecard-link" href={`/scorecards/${a.slug}/`}>View match scorecard <ArrowUpRight size={16}/></Link>}
+      <p className="standfirst">{a.description}</p>
     </header>
     <figure className="article-image">{a.imageUrl?<img className="article-cover" src={a.imageUrl} alt={a.imageAlt||''}/>:<Art kind={a.art}/>} {a.imageCredit&&<figcaption>{a.imageCredit.split(/(https?:\/\/[^\s|]+)/g).map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</figcaption>}</figure>
     <div className="article-content-layout">
@@ -32,6 +32,7 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
         {a.label&&<div className="draft-notice"><b>Editorial draft</b><p>This sample match report is awaiting scorecard verification. It is shown here for design review.</p></div>}
         {a.sections.map((s,i)=><section id={`section-${i}`} key={i}><h2>{s.heading}</h2>{s.body.map((p,n)=><p key={n}>{p}</p>)}</section>)}
         {a.correctionNote&&<div className="draft-notice"><b>Update / correction</b><p>{a.correctionNote}</p><small>Updated {a.updatedAt?new Date(a.updatedAt).toLocaleDateString('en-IN'):''}</small></div>}
+        {a.scorecard&&<div className="article-score-action"><Link className="scorecard-link" href={`/scorecards/${a.slug}/`}>View full scorecard <ArrowUpRight size={16}/></Link></div>}
         <div className="article-end">● <span>THE CRICKET LENS</span></div>
         <div className="source-note"><b>{a.label?'Source verification':'Sources & notes'}</b>{a.label&&<p>Prepared from the match notes supplied for this preview. An authoritative scorecard and source links must be added before publication.</p>}{a.sources?.map(s=><p key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.label} ↗</a></p>)}{a.authorBio&&<p>{a.authorBio}</p>}<Link href="/editorial/">Read our editorial standards ↗</Link></div>
       </div>
