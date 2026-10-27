@@ -41,3 +41,14 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 .related-cover{width:140px;height:150px;object-fit:cover}.related-grid .related-cover{display:block}
 @media(max-width:800px){.article-page .back-link{padding:26px 0 30px}.article-heading{margin-bottom:30px}.article-content-layout{display:block;margin:42px auto 60px}.article-content-layout aside{display:none}.article-body{max-width:690px;margin:auto}.article-image>.article-cover,.article-image>.art{aspect-ratio:16 / 9}.related-cover{width:100px;height:135px}}
 @media(max-width:540px){.article-page .back-link{font-size:12px;padding:23px 0 27px}.article-heading h1{font-size:clamp(36px,10vw,46px);letter-spacing:-.035em;line-height:1.1}.article-heading .standfirst{font-size:18px;line-height:1.55}.byline{flex-wrap:wrap}.article-date{display:block;margin-left:58px;flex-basis:100%;margin-top:-5px}.article-image>.article-cover,.article-image>.art{aspect-ratio:4 / 3}.article-image figcaption{font-size:10px}.article-content-layout{margin:36px auto 54px}.article-body section{margin-bottom:38px}.article-body h2{font-size:27px}.article-body section p{font-size:17px;line-height:1.8}.source-note{padding:20px}.related-cover{width:110px;height:135px}}
+
+/* Article typography */
+.article-page{font-family:Inter,Arial,sans-serif}
+.article-page .article-heading h1{font-family:Inter,Arial,sans-serif;font-size:36px;font-weight:600;line-height:1.22;letter-spacing:-.025em;margin:16px 0}
+.article-page .article-heading .eyebrow{text-transform:none;font-size:12px;letter-spacing:.03em}
+.article-page .article-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;font-size:13px;line-height:1.6;color:#646b7b;margin:0 0 22px}
+.article-page .article-meta b{font-weight:600;color:#30354b}
+.article-page .article-heading .standfirst{font-family:Inter,Arial,sans-serif;font-size:18px;line-height:1.65}
+.article-page .article-body h2{font-family:Inter,Arial,sans-serif;font-size:24px;font-weight:600;line-height:1.3;letter-spacing:-.02em}
+.article-page .article-body section p{font-family:Inter,Arial,sans-serif;font-size:18px;line-height:1.8}
+@media(max-width:540px){.article-page .article-heading h1{font-size:36px}.article-page .article-body h2{font-size:24px}.article-page .article-body section p{font-size:18px}}

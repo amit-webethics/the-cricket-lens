@@ -13,13 +13,17 @@ export async function generateMetadata({params}:{params:Promise<{slug:string}>})
 }
 export default async function Article({params}:{params:Promise<{slug:string}>}){
   const {slug}=await params; const {articles:published}=await publicContent(); const a=published.find(a=>a.slug===slug); if(!a)notFound();
+  const date=a.publishedAt?new Date(a.publishedAt):null;
+  const publishedDate=date?new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(date):'';
+  const publishedTime=date?new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).format(date):'';
   const related=published.filter(x=>x.slug!==slug).slice(0,2);
   return <main id="main" className="article-page">
     <Link href="/#stories" className="back-link"><ArrowLeft size={16}/> Back to stories</Link>
     <header className="article-heading">
-      <div className="eyebrow"><span>{a.category}</span>{a.label&&<span className="draft-pill">DRAFT FOR REVIEW</span>}</div>
-      <h1>{a.title}</h1><p className="standfirst">{a.description}</p>
-      <div className="byline"><span className="author-avatar" aria-hidden="true">L<span>●</span></span><div><b>{a.author||'The Cricket Lens'}</b><span>{a.authorRole||'Editorial desk'} · {a.minutes} min read</span></div>{a.publishedAt&&<time className="article-date" dateTime={a.publishedAt}>{new Date(a.publishedAt).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</time>}</div>
+      <div className="eyebrow"><span>{a.series||a.category}</span>{a.label&&<span className="draft-pill">DRAFT FOR REVIEW</span>}</div>
+      <h1>{a.title}</h1>
+      <div className="article-meta"><span>by <b>{a.author||'The Cricket Lens'}</b></span>{date&&<><span aria-hidden="true">•</span><time dateTime={a.publishedAt}>Published on {publishedDate} <span aria-hidden="true">•</span> {publishedTime} IST</time></>}<span aria-hidden="true">•</span><span>{a.minutes} min read</span></div>
+      <p className="standfirst">{a.description}</p>
     </header>
     <figure className="article-image">{a.imageUrl?<img className="article-cover" src={a.imageUrl} alt={a.imageAlt||''}/>:<Art kind={a.art}/>} {a.imageCredit&&<figcaption>{a.imageCredit.split(/(https?:\/\/[^\s|]+)/g).map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</figcaption>}</figure>
     <div className="article-content-layout">
