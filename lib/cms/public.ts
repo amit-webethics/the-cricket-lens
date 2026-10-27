@@ -2,7 +2,7 @@ import {cache} from 'react';
 import {connection} from 'next/server';
 import {listEntries} from './db';
 import {articles as samples,Article} from '../articles';
-export type PublicArticle=Article&{series?:string;author?:string;authorBio?:string;authorRole?:string;imageUrl?:string;imageAlt?:string;imageCredit?:string;publishedAt?:string;updatedAt?:string;sources?:{label:string;url:string}[];correctionNote?:string;seoTitle?:string;seoDescription?:string;socialImage?:string;featured?:boolean;tags?:string[]};
+export type PublicArticle=Article&{series?:string;scorecard?:string;author?:string;authorBio?:string;authorRole?:string;imageUrl?:string;imageAlt?:string;imageCredit?:string;publishedAt?:string;updatedAt?:string;sources?:{label:string;url:string}[];correctionNote?:string;seoTitle?:string;seoDescription?:string;socialImage?:string;featured?:boolean;tags?:string[]};
 export const publicContent=cache(async()=>{if(process.env.NEXT_STATIC_REVIEW!=='1')await connection();
  if(!process.env.DATABASE_URL)return {articles:samples as PublicArticle[],news:[] as any[],categories:['Match Reports','Match Previews','Player Analysis','Opinions & Explainers'],pages:[] as any[],settings:null as any,sample:true};
  const [stories,news,categories,authors,pages,settings]=await Promise.all(['articles','news','categories','authors','pages','settings'].map(k=>listEntries(k as any,true)));

@@ -23,7 +23,7 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
       <div className="eyebrow"><span>{a.series||a.category}</span>{a.label&&<span className="draft-pill">DRAFT FOR REVIEW</span>}</div>
       <h1>{a.title}</h1>
       <div className="article-meta"><span>by <b>{a.author||'The Cricket Lens'}</b></span>{date&&<><span aria-hidden="true">•</span><time dateTime={a.publishedAt}>Published on {publishedDate} <span aria-hidden="true">•</span> {publishedTime} IST</time></>}<span aria-hidden="true">•</span><span>{a.minutes} min read</span></div>
-      <p className="standfirst">{a.description}</p>
+      <p className="standfirst">{a.description}</p>{a.scorecard&&<Link className="scorecard-link" href={`/scorecards/${a.slug}/`}>View match scorecard <ArrowUpRight size={16}/></Link>}
     </header>
     <figure className="article-image">{a.imageUrl?<img className="article-cover" src={a.imageUrl} alt={a.imageAlt||''}/>:<Art kind={a.art}/>} {a.imageCredit&&<figcaption>{a.imageCredit.split(/(https?:\/\/[^\s|]+)/g).map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</figcaption>}</figure>
     <div className="article-content-layout">
