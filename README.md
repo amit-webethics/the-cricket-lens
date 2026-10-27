@@ -44,3 +44,7 @@ The API has no hard-delete endpoint. Unpublish or archive content to preserve ed
 Run `npm run db:import` with DATABASE_URL set to import missing categories, author, site settings, five sample articles and six information pages. Articles and pages are imported as drafts for editorial review; no unverified reports or policy drafts are automatically published. The import is transactional and idempotent: existing records are preserved.
 
 Every editorial page is protected by the server-side `(protected)` layout. Missing credentials, missing sessions, expired sessions and database failures redirect to `/admin/login/`. The API separately verifies sessions on every protected request. No setup-preview bypass is available on production or the static review. Configure ADMIN_EMAIL and ADMIN_PASSWORD_HASH in Vercel before signing in.
+
+## Administrator authentication
+
+Admin identity is managed by Neon Auth. A verified email must also have an active row in cms_admin_authorized before any admin page or API is available. Set NEON_AUTH_BASE_URL and NEON_AUTH_COOKIE_SECRET as server-side Vercel variables. The initial authorised email is provisioned separately in the database. On the sign-in page use First time? Set up account, verify the email code, then sign in. Forgot password uses Neon Auth email OTP. Never commit passwords or auth secrets.

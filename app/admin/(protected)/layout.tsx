@@ -1,2 +1,3 @@
-import {cookies} from 'next/headers';import {redirect} from 'next/navigation';import AdminShell from '../../../components/admin/AdminShell';import {cookieName,validSession} from '../../../lib/cms/auth';
-export default async function ProtectedLayout({children}:{children:React.ReactNode}){let authenticated=false;try{authenticated=await validSession((await cookies()).get(cookieName)?.value)}catch{authenticated=false}if(!authenticated)redirect('/admin/login/');return <AdminShell authenticated>{children}</AdminShell>}
+export const dynamic='force-dynamic';
+import {redirect} from 'next/navigation';import AdminShell from '../../../components/admin/AdminShell';import {isAdmin} from '../../../lib/neon/server';
+export default async function ProtectedLayout({children}:{children:React.ReactNode}){if(!await isAdmin())redirect('/admin/login/');return <AdminShell authenticated>{children}</AdminShell>}
