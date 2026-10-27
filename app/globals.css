@@ -61,4 +61,4 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 
 /* Article body text */
 .article-page .article-body h2{font-size:20px;line-height:1.35}
-.article-page .article-body p{font-size:14px;line-height:1.8}
+.article-page .article-body section p,.article-page .article-body .draft-notice p,.article-page .article-body .source-note p{font-size:14px;line-height:1.8}
