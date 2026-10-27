@@ -58,3 +58,7 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 /* Shared typography and article browsing */
 .article-page .article-heading .standfirst{max-width:none;width:100%}.feed-heading h1,.feed-copy h2,.lead-card h2{font-size:28px;line-height:1.25}.series-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;color:#51576b;font-size:12px}.series-filter select{max-width:100%;border:1px solid #dedfee;background:#fff;border-radius:5px;color:#34385a;padding:9px 11px;font:inherit}.article-score-action{margin:8px 0 32px}@media(max-width:650px){.feed-heading h1,.feed-copy h2,.lead-card h2{font-size:28px}}
 .full-scorecard{grid-template-columns:1fr}.score-table-scroll{overflow-x:auto}.score-table-scroll table{min-width:560px}.innings .score-table-scroll th:not(:first-child),.innings .score-table-scroll td:not(:first-child){text-align:right}.dismissal{display:block;font-size:11px;color:#7b8090;font-weight:400;margin-top:4px}.innings-detail{padding:0 20px;color:#606879;font-size:12px;line-height:1.7}.full-scorecard .innings h3{font-size:15px}
+
+/* Article body text */
+.article-page .article-body h2{font-size:20px;line-height:1.35}
+.article-page .article-body p{font-size:14px;line-height:1.8}
