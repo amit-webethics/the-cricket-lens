@@ -11,9 +11,21 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
  if(req.method!=='GET'&&!sameOrigin(req))return json({error:'Request origin is not allowed'},403);
  if(path[0]==='session'&&req.method==='GET')return json({configured:!!process.env.NEON_AUTH_BASE_URL,authenticated:await isAdmin()});
  if(!await isAdmin())return json({error:'Sign in with the authorised admin account'},401);
+ if(path[0]==='draft-section'&&req.method==='POST'){
+ const {sectionDraftInput,generateSection}=await import('../../../../lib/cms/drafting');
+ if(Number(req.headers.get('content-length')||0)>40000)return json({error:'Keep the drafting context below 40 KB.'},413);
+ const input=sectionDraftInput.parse(await req.json());
+ const references=input.articleId?await database()`SELECT data FROM cms_collected WHERE entry_id=${input.articleId} OR COALESCE(group_id,id) IN (SELECT COALESCE(group_id,id) FROM cms_collected WHERE entry_id=${input.articleId})`:[];
+ try{return json(await generateSection(input,references.map(r=>r.data)));}catch(e:any){
+  console.error('Section drafting failed',{code:e.message?.startsWith('DRAFT_')?e.message:e.name});
+  const message=e.message==='DRAFT_NOT_CONFIGURED'?'Draft generation needs AI_GATEWAY_API_KEY and AI_DRAFT_MODEL in Vercel.':e.message==='DRAFT_NEEDS_FACTS'?'Add verified facts or section notes before generating.':'Draft generation could not complete. Your writing is unchanged. Please try again.';
+  return json({error:message},e.message==='DRAFT_NEEDS_FACTS'?400:503);
+ }
+ }
  if(path[0]==='collected'){
  const store=createCollectedStore(database());
  if(req.method==='GET')return json({items:await store.list(),configured:!!process.env.APIFY_API_TOKEN&&!!process.env.APIFY_ACTOR_ID});
+ if(req.method==='POST'&&path[1]==='merge'){const body=z.object({id:z.string().regex(/^[a-f0-9]{64}$/),target:z.string().regex(/^[a-f0-9]{64}$/)}).parse(await req.json());return json(await store.merge(body.id,body.target));}
  if(req.method==='POST'&&path[1]==='import'){const body=z.object({runId:runIdSchema}).parse(await req.json());return json(await importApifyRun(body.runId));}
  if(req.method==='POST'&&path[1]&&/^[a-f0-9]{64}$/.test(path[1])){const body=z.discriminatedUnion('action',[z.object({action:z.literal('dismiss')}),z.object({action:z.literal('draft'),kind:z.enum(['articles','news']),categoryId:z.uuid().optional(),authorId:z.uuid().optional()})]).parse(await req.json());
  if(body.action==='dismiss')return json({items:await store.dismiss(path[1])});
