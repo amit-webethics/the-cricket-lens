@@ -2,6 +2,7 @@ import {createHash,timingSafeEqual} from 'node:crypto';
 import {z} from 'zod';
 import {database,createContentStore} from './db';
 import {slugify} from './schema';
+import {coverageMatch} from './story-matching';
 
 export const runIdSchema=z.string().regex(/^[A-Za-z0-9]{10,40}$/,'Enter the Apify run ID, not the full URL');
 export function webhookAuthorized(value:string|null){const expected=process.env.APIFY_WEBHOOK_SECRET;if(!expected||expected.length<32||!value)return false;const a=Buffer.from(value),b=Buffer.from(`Bearer ${expected}`);return a.length===b.length&&timingSafeEqual(a,b);}
@@ -35,24 +36,45 @@ export function createCollectedStore(sql:ReturnType<typeof database>){
  async importRows(rows:any[],runId:string){
   let inserted=0,duplicates=0,invalid=0;
   const normalized=[];for(const row of rows){try{normalized.push(normalizeStory(row,runId));}catch{invalid++;}}
-  await sql.begin(async tx=>{for(const row of normalized){const result=await tx`INSERT INTO cms_collected(id,source_url,data) VALUES(${row.id},${row.url},${tx.json(row)}) ON CONFLICT DO NOTHING RETURNING id`;if(result.length)inserted++;else duplicates++;}});
+  await sql.begin(async tx=>{
+   await tx`LOCK TABLE cms_collected IN SHARE ROW EXCLUSIVE MODE`;
+   const recent=await tx`SELECT id,data,group_id FROM cms_collected WHERE created_at > now()-interval '7 days'`;
+   for(const row of normalized){
+   const match=recent.find((r:any)=>coverageMatch(row,r.data)==='same');
+   const groupId=match?(match.group_id||match.id):row.id;
+   const result=await tx`INSERT INTO cms_collected(id,source_url,data,group_id) VALUES(${row.id},${row.url},${tx.json(row)},${groupId}) ON CONFLICT DO NOTHING RETURNING id`;if(result.length){inserted++;recent.push({id:row.id,data:row,group_id:groupId});}else duplicates++;}});
   return {inserted,duplicates,invalid,total:rows.length};
  },
- async list(){return sql`SELECT id,data,state,entry_id,entry_kind,created_at FROM cms_collected ORDER BY created_at DESC LIMIT 500`;},
+ async list(){
+  const rows=await sql`WITH latest AS (SELECT COALESCE(group_id,id) AS root,max(created_at) AS newest FROM cms_collected GROUP BY COALESCE(group_id,id) ORDER BY newest DESC LIMIT 500) SELECT c.* FROM cms_collected c JOIN latest g ON COALESCE(c.group_id,c.id)=g.root ORDER BY g.newest DESC,c.created_at`;
+  const groups=new Map<string,any>();for(const row of rows){const root=row.group_id||row.id;let item=groups.get(root);if(!item){item={...row,id:root,references:[],possibleDuplicates:[]};groups.set(root,item);}item.references.push({...row.data,id:row.id});if(row.entry_id){item.entry_id=row.entry_id;item.entry_kind=row.entry_kind;item.state='drafted';}}
+  const items=[...groups.values()];for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){if(coverageMatch(items[i].data,items[j].data)!=='different'){items[i].possibleDuplicates.push({id:items[j].id,title:items[j].data.title});items[j].possibleDuplicates.push({id:items[i].id,title:items[i].data.title});}}
+  return items;
+ },
+ async merge(id:string,target:string){return sql.begin(async tx=>{
+  await tx`LOCK TABLE cms_collected IN SHARE ROW EXCLUSIVE MODE`;
+  const rows=await tx`SELECT * FROM cms_collected WHERE COALESCE(group_id,id) IN (${id},${target})`;
+  if(id===target||!rows.some(r=>(r.group_id||r.id)===id)||!rows.some(r=>(r.group_id||r.id)===target))throw new Error('Choose two existing story groups');
+  if(rows.filter(r=>r.entry_id).length)throw new Error('Choose stories that have not been sent to the editor');
+  await tx`UPDATE cms_collected SET group_id=${target},state='new' WHERE COALESCE(group_id,id)=${id}`;
+  return {ok:true};
+ });},
  async convert(id:string,choice:{kind:'articles'|'news';categoryId?:string;authorId?:string}){
   return sql.begin(async tx=>{
-   const [row]=await tx`SELECT * FROM cms_collected WHERE id=${id} FOR UPDATE`;
+   await tx`LOCK TABLE cms_collected IN SHARE ROW EXCLUSIVE MODE`;
+   const members=await tx`SELECT * FROM cms_collected WHERE COALESCE(group_id,id)=${id} OR id=${id} ORDER BY created_at FOR UPDATE`;
+   const row=members.find(r=>r.entry_id)||members[0];
    if(!row)throw new Error('Collected story not found');
    if(row.entry_id)return {id:row.entry_id,kind:row.entry_kind};
    const d=row.data;const store=createContentStore(tx as unknown as ReturnType<typeof database>,true);
    const common={title:d.title,slug:`${slugify(d.title).slice(0,140)||'cricket'}-${id.slice(0,12)}`,status:'draft',verified:false};
-   const value=choice.kind==='news'?{...common,summary:d.summary.slice(0,1200)||d.title,sourceLabel:d.source,sourceUrl:d.url,team:''}:{...common,description:d.summary.slice(0,500)||d.title,categoryId:choice.categoryId,authorId:choice.authorId,minutes:1,sections:[{heading:'Story',body:[d.summary||d.title]}],sources:[{label:d.source,url:d.url}],tags:[],series:'',featured:false,imageRightsConfirmed:false};
+   const value=choice.kind==='news'?{...common,summary:d.summary.slice(0,1200)||d.title,sourceLabel:[...new Set(members.map(r=>r.data.source))].join(' / ').slice(0,160),sourceUrl:d.url,sources:members.slice(0,30).map(r=>({label:r.data.source,url:r.data.url})),team:''}:{...common,description:d.summary.slice(0,500)||d.title,categoryId:choice.categoryId,authorId:choice.authorId,minutes:1,sections:[{heading:'Story',body:[d.summary||d.title]}],sources:members.slice(0,30).map(r=>({label:r.data.source,url:r.data.url})),tags:[],series:'',featured:false,imageRightsConfirmed:false};
    const entry=await store.saveEntry(choice.kind,value);
-   await tx`UPDATE cms_collected SET state='drafted',entry_id=${entry.id},entry_kind=${choice.kind} WHERE id=${id}`;
+   await tx`UPDATE cms_collected SET state='drafted',entry_id=${entry.id},entry_kind=${choice.kind} WHERE COALESCE(group_id,id)=${id} OR id=${id}`;
    return {id:entry.id,kind:entry.kind};
   });
  },
- async dismiss(id:string){return sql`UPDATE cms_collected SET state='dismissed' WHERE id=${id} AND entry_id IS NULL RETURNING id`;}
+ async dismiss(id:string){return sql`UPDATE cms_collected SET state='dismissed' WHERE (COALESCE(group_id,id)=${id} OR id=${id}) AND entry_id IS NULL RETURNING id`;}
  };
 }
 export async function importApifyRun(input:unknown,fetcher:typeof fetch=fetch,store=createCollectedStore(database())){

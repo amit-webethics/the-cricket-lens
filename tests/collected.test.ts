@@ -18,7 +18,7 @@ test('metadata routing and unknowns',()=>{
 });
 test('idempotent imports and draft conversion preserve editorial changes',async()=>{
  const db=await PGlite.create();try{
- await db.exec(await readFile('db/001_cms.sql','utf8'));await db.exec(await readFile('db/003_collected.sql','utf8'));
+ await db.exec(await readFile('db/001_cms.sql','utf8'));await db.exec(await readFile('db/003_collected.sql','utf8'));await db.exec(await readFile('db/004_story_groups.sql','utf8'));
  const sql=adapter(db),store=createCollectedStore(sql),cms=createContentStore(sql);
  const first=await store.importRows([raw,{'Original headline':'Invalid'}],'run-one');assert.deepEqual(first,{inserted:1,duplicates:0,invalid:1,total:2});
  const [{id}]=await store.list();const entry=await store.convert(id,{kind:'news'});
@@ -42,4 +42,26 @@ test('webhook fails closed and API checks Actor identity',async()=>{
  const store={importRows:async(rows:any[],runId:string)=>({count:rows.length,runId})};
  assert.deepEqual(await importApifyRun('1234567890',okFetch as any,store as any),{count:1,runId:'1234567890'});
  assert.equal(calls.length,2);
+});
+test('cross-source grouping preserves both links, editorial drafts and manual merge boundaries',async()=>{
+ const db=await PGlite.create();try{
+ for(const file of ['001_cms.sql','003_collected.sql','004_story_groups.sql'])await db.exec(await readFile(`db/${file}`,'utf8'));
+ const sql=adapter(db),store=createCollectedStore(sql),cms=createContentStore(sql);
+ const first={...raw,'Original headline':'India announce squad for Australia tour','Feed summary (source text)':'India have announced their squad for the Australia tour.','Published UTC':'2026-10-30T01:00:00Z',Source:'ESPNcricinfo','Source URL':'https://www.espncricinfo.com/story/india-squad'};
+ const second={...first,Source:'Cricbuzz','Source URL':'https://www.cricbuzz.com/cricket-news/1/india-squad'};
+ await store.importRows([first],'run1');await store.importRows([second],'run2');
+ let groups=await store.list();assert.equal(groups.length,1);assert.equal(groups[0].references.length,2);
+ const category=await cms.saveEntry('categories',{title:'Match Reports',slug:'reports',status:'published'}),author=await cms.saveEntry('authors',{title:'Desk',slug:'desk',status:'published'});
+ const article=await store.convert(groups[0].id,{kind:'articles',categoryId:category.id,authorId:author.id});
+ assert.equal((await cms.listEntries('articles'))[0].data.sources.length,2);
+ await store.importRows([{...first,Source:'Cricbuzz','Source URL':'https://www.cricbuzz.com/cricket-news/2/squad'}],'run3');
+ groups=await store.list();assert.equal(groups.length,1);assert.equal(groups[0].entry_id,article.id);assert.equal(groups[0].references.length,3);assert.equal(groups[0].state,'drafted');
+ assert.equal((await store.convert(groups[0].id,{kind:'news'})).id,article.id);
+ await store.importRows([{...first,'Original headline':'Selection reaction from former players','Source URL':'https://a.test/other'},{...first,'Original headline':'Former players discuss selection','Source URL':'https://b.test/other'}],'run4');
+ groups=await store.list();const plain=groups.filter(g=>!g.entry_id);assert.equal(plain.length,2);
+ await store.merge(plain[0].id,plain[1].id);groups=await store.list();assert.equal(groups.length,2);assert.equal(groups.find(g=>!g.entry_id)?.references.length,2);
+ await assert.rejects(store.merge(groups[0].id,groups[1].id),/not been sent/);
+ assert.equal((await store.importRows([second],'run5')).duplicates,1);
+ assert.equal((await cms.listEntries('articles',true)).length,0);
+ }finally{await db.close();}
 });
