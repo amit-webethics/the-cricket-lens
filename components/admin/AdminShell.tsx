@@ -1,7 +1,7 @@
 'use client';
 import {authClient} from '../../lib/neon/client';import Link from 'next/link';import {usePathname,useRouter} from 'next/navigation';import {createContext,useContext,useEffect,useState} from 'react';
 import {LayoutDashboard,FileText,Newspaper,Tags,Users,Image as ImageIcon,PanelsTopLeft,Settings,ArrowUpRight,LogOut,Menu,X,Database,LoaderCircle} from 'lucide-react';
-const links=[{href:'/admin/',label:'Overview',icon:LayoutDashboard},{href:'/admin/articles/',label:'Blog articles',icon:FileText},{href:'/admin/news/',label:'Cricket news',icon:Newspaper},{href:'/admin/categories/',label:'Categories',icon:Tags},{href:'/admin/authors/',label:'Authors',icon:Users},{href:'/admin/media/',label:'Media library',icon:ImageIcon},{href:'/admin/pages/',label:'Website pages',icon:PanelsTopLeft},{href:'/admin/settings/',label:'Site settings',icon:Settings}];
+const links=[{href:'/admin/',label:'Overview',icon:LayoutDashboard},{href:'/admin/articles/',label:'Blog articles',icon:FileText},{href:'/admin/news/',label:'Cricket news',icon:Newspaper},{href:'/admin/collected/',label:'Collected stories',icon:Newspaper},{href:'/admin/categories/',label:'Categories',icon:Tags},{href:'/admin/authors/',label:'Authors',icon:Users},{href:'/admin/media/',label:'Media library',icon:ImageIcon},{href:'/admin/pages/',label:'Website pages',icon:PanelsTopLeft},{href:'/admin/settings/',label:'Site settings',icon:Settings}];
 export type AdminState={loading:boolean;review:boolean;authenticated:boolean;error:string;refresh:()=>Promise<void>};
 const Context=createContext<AdminState>({loading:true,review:false,authenticated:false,error:'',refresh:async()=>{}});
 export const useAdmin=()=>useContext(Context);

@@ -4,9 +4,10 @@ let client:ReturnType<typeof postgres>|undefined;
 export function database(){if(!process.env.DATABASE_URL)throw new Error('DATABASE_NOT_CONFIGURED');return client??=postgres(process.env.DATABASE_URL,{max:3,idle_timeout:20,connect_timeout:10,prepare:false});}
 export async function closeDatabase(){if(client){await client.end();client=undefined;}}
 const map=(r:any):Entry=>({id:r.id,kind:r.kind,title:r.title,slug:r.slug,status:r.status,data:r.data,revision:r.revision,createdAt:new Date(r.created_at).toISOString(),updatedAt:new Date(r.updated_at).toISOString(),publishedAt:r.published_at?new Date(r.published_at).toISOString():null});
-export function createContentStore(sql:ReturnType<typeof postgres>){
+export function createContentStore(sql:ReturnType<typeof postgres>,inTransaction=false){
+const transact=inTransaction?((fn:any)=>fn(sql)) as typeof sql.begin:sql.begin.bind(sql);
 async function listEntries(kind:Kind,publicOnly=false){const rows=publicOnly?await sql`SELECT * FROM cms_records WHERE kind=${kind} AND status='published' ORDER BY published_at DESC NULLS LAST,created_at DESC`:await sql`SELECT * FROM cms_records WHERE kind=${kind} ORDER BY updated_at DESC`;return rows.map(map);}
-async function saveEntry(kind:Kind,input:unknown,id?:string,revision?:number){const data=schemas[kind].parse(input) as Record<string,any>;return sql.begin(async tx=>{
+async function saveEntry(kind:Kind,input:unknown,id?:string,revision?:number){const data=schemas[kind].parse(input) as Record<string,any>;return transact(async tx=>{
  // One transaction protects related-record checks and optimistic edit revisions.
  if(kind==='articles'){const cats=await tx`SELECT id FROM cms_records WHERE kind='categories' AND id=${data.categoryId} AND status='published' FOR SHARE`;const authors=await tx`SELECT id FROM cms_records WHERE kind='authors' AND id=${data.authorId} AND status='published' FOR SHARE`;if(!cats.length||!authors.length)throw new Error('Choose an active category and author');}
  if(['categories','authors'].includes(kind)&&id&&data.status!=='published'){await tx`SELECT id FROM cms_records WHERE id=${id} AND kind=${kind} FOR UPDATE`;const key=kind==='categories'?'categoryId':'authorId';const used=await tx`SELECT id FROM cms_records WHERE kind='articles' AND data->>${key}=${id} AND status!='archived'`;if(used.length)throw new Error('This entry is used by articles. Reassign or archive those articles first.');}
