@@ -41,3 +41,13 @@ test('source content persists privately and is excluded from public records',asy
  assert.equal('sourceContent' in (await store.listEntries('news',true))[0].data,false);
  }finally{await db.close();}
 });
+
+ test('accepts legacy ESPN RSS article URLs, Cricinfo aliases and their approved redirects',async()=>{
+ const legacy='https://www.espncricinfo.com/ci/content/story/123456.html?ex_cid=OTC-RSS#top';
+ assert.equal(validateSourceUrl(legacy).pathname,'/ci/content/story/123456.html');
+ assert.equal(validateSourceUrl('https://www.cricinfo.com/ci/content/story/123456.html').hostname,'www.cricinfo.com');
+ assert.equal(validateSourceUrl('https://m.espncricinfo.com/ci/content/current/123456.html').hostname,'m.espncricinfo.com');
+ const calls:string[]=[];const result=await fetchSourceContent(legacy,async(u)=>{calls.push(u.toString());return calls.length===1?{status:301,location:'https://www.espncricinfo.com/story/india-squad-123456',contentType:'',html:''}:{status:200,contentType:'text/html',html};});
+ assert.equal(calls.length,2);assert.equal(result.publisher,'ESPNcricinfo');assert.match(result.text,/selectors retained/);
+ for(const invalid of ['https://www.espncricinfo.com/ci/content/player/123456.html','https://www.cricinfo.com.evil.test/ci/content/story/123456.html','https://www.espncricinfo.com/ci/content/story/not-an-id.html'])assert.throws(()=>validateSourceUrl(invalid));
+ });
