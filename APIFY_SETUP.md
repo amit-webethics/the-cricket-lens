@@ -61,8 +61,21 @@ For **Generate draft** on every article body section, configure these server-onl
 - `AI_GATEWAY_API_KEY`: your Vercel AI Gateway key.
 - `AI_DRAFT_MODEL`: an available `provider/model` text model supporting structured output, selected from your Gateway model catalogue.
 
-Generation is an authenticated same-origin POST. It uses the section's existing text, title/introduction, your notes, and stored collected summaries for the saved article. It does not fetch full articles from URLs, browse, or verify facts. For articles not created from the queue, provide facts in the section or notes. Each click makes one model request with no automatic retries, a 45-second timeout and a 1600-token output cap. Normal model usage costs apply.
+Generation is an authenticated same-origin POST. It uses the section's existing text, title/introduction, your notes, and stored collected summaries for the saved article. Use Fetch source content in the article/news editor to retrieve accessible source text first. Generation uses that fetched reference text when supplied; it does not browse or verify facts. For articles not created from the queue, provide facts in the section or notes. Each click makes one model request with no automatic retries, a 45-second timeout and a 1600-token output cap. Normal model usage costs apply.
 
 Suggestions are shown separately with facts to check; use, edit or discard them. Applying a suggestion changes only that body section and clears the verification checkbox. It does not save or publish. If the section or context changed while generating, the stale suggestion cannot be applied. Generate a fresh one. Review the facts, save and publish through the usual editor workflow.
 
 Validation: TypeScript, production build, CMS/import/drafting tests, and collector parser/workbook tests. A live Cricbuzz run in Apify and a live model call still need to be confirmed after configuration.
+
+
+## Fetch source content and regenerate
+
+Article and news detail editors now have a **Source content** panel. Choose a saved source URL and select **Fetch source content**. Supported URLs are HTTPS article pages on ESPNcricinfo and Cricbuzz. Readable article text is extracted from public HTML/structured metadata, with publisher, title, URL, timestamp and section headings. Access restrictions are not bypassed. Some pages require JavaScript or omit portions of their content; extraction flags limits and completeness should be checked against the original. Images, embedded media, tables and live score widgets are not imported.
+
+Fetched material is a private reference and does not replace your article or news summary. Save the item to retain it. This feature stores references in the existing JSON content field, so no new database migration is needed. Private sourceContent is removed by public database queries, including /api/content responses.
+
+For articles, optionally add the fetched section headings; existing sections are preserved. Each body section offers **Regenerate with AI** when it already has text, or **Generate draft** when empty. News has the same control for its summary. Add editorial notes to focus the rewrite. Suggestions use the current section, fetched text and collected source summaries. Review the returned text and checks, then use or discard it. Applying a suggestion clears factual verification and still requires an explicit save/publish action.
+
+Up to five source references and 200,000 text characters can be stored per item (100,000 per source). Each fetch has network time/size limits and validates hosts, redirect destinations and resolved addresses. Regeneration uses the existing AI_GATEWAY_API_KEY and AI_DRAFT_MODEL settings; fetched material is sent to the configured model when generating. No Actor rebuild or additional credentials are required for this editor update.
+
+Validation includes extraction fixtures, redirects/URL restrictions, private-reference persistence/public exclusion, article/news generation payloads, the news character limit, TypeScript and production build. The browser binary could not be installed in the workspace; authenticated browser interaction and live publisher/model calls must be checked on the deployed site.

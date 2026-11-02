@@ -11,10 +11,15 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
  if(req.method!=='GET'&&!sameOrigin(req))return json({error:'Request origin is not allowed'},403);
  if(path[0]==='session'&&req.method==='GET')return json({configured:!!process.env.NEON_AUTH_BASE_URL,authenticated:await isAdmin()});
  if(!await isAdmin())return json({error:'Sign in with the authorised admin account'},401);
+ if(path[0]==='source-content'&&req.method==='POST'){
+ const {fetchSourceContent,sourceErrorMessage}=await import('../../../../lib/cms/source-content');
+ const body=z.object({url:z.string().max(1500)}).parse(await req.json());
+ try{return json({source:await fetchSourceContent(body.url)});}catch(e:any){console.error('Source fetch failed',{code:e.message?.startsWith('SOURCE_')?e.message:e.name});return json({error:sourceErrorMessage(e.message)},e.message==='SOURCE_URL'?400:502);}
+ }
  if(path[0]==='draft-section'&&req.method==='POST'){
  const {sectionDraftInput,generateSection}=await import('../../../../lib/cms/drafting');
- if(Number(req.headers.get('content-length')||0)>40000)return json({error:'Keep the drafting context below 40 KB.'},413);
- const input=sectionDraftInput.parse(await req.json());
+ const raw=await req.text();if(Buffer.byteLength(raw)>500000)return json({error:'Keep the drafting context below 500 KB.'},413);
+ const input=sectionDraftInput.parse(JSON.parse(raw));
  const references=input.articleId?await database()`SELECT data FROM cms_collected WHERE entry_id=${input.articleId} OR COALESCE(group_id,id) IN (SELECT COALESCE(group_id,id) FROM cms_collected WHERE entry_id=${input.articleId})`:[];
  try{return json(await generateSection(input,references.map(r=>r.data)));}catch(e:any){
   console.error('Section drafting failed',{code:e.message?.startsWith('DRAFT_')?e.message:e.name});
