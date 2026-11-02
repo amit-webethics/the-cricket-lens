@@ -3,13 +3,13 @@ import {request} from 'node:https';
 import {BlockList,isIP} from 'node:net';
 import {Readability} from '@mozilla/readability';
 import {parseHTML} from 'linkedom';
-const hosts=new Set(['espncricinfo.com','www.espncricinfo.com','cricbuzz.com','www.cricbuzz.com','m.cricbuzz.com']);
+const hosts=new Set(['espncricinfo.com','www.espncricinfo.com','cricbuzz.com','www.cricbuzz.com','m.cricbuzz.com','m.espncricinfo.com','cricinfo.com','www.cricinfo.com']);
 const MAX_HTML=3_000_000,MAX_TEXT=100_000;
 import {sourceReferenceSchema,type SourceReference} from './source-reference';
 export function validateSourceUrl(value:string){let u:URL;try{u=new URL(value);}catch{throw new Error('SOURCE_URL');}
  if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443')||!hosts.has(u.hostname))throw new Error('SOURCE_URL');
  if(u.hostname.includes('cricbuzz')&&!/^\/cricket-news\/\d+(?:\/|$)/.test(u.pathname))throw new Error('SOURCE_URL');
- if(u.hostname.includes('espncricinfo')&&!/^\/(?:story|cricket-news|series)\//.test(u.pathname))throw new Error('SOURCE_URL');
+ if(!u.hostname.includes('cricbuzz')&&!(/^\/(?:story|cricket-news|series)\//.test(u.pathname)||/^\/(?:ci|[a-z]{2,3})\/content\/(?:story|current)\/\d+\.html$/.test(u.pathname)))throw new Error('SOURCE_URL');
  u.hash='';return u;
 }
 const blocked=new BlockList();
