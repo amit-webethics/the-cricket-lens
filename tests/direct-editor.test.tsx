@@ -36,3 +36,12 @@ test('UI fetch and regenerate update the same fields, undo works, stale AI resul
  failFetch=true;await click('Fetch content');assert.equal((container.querySelector('textarea') as HTMLTextAreaElement).value,'New manual edits');failFetch=false;
  }}finally{await act(async()=>root.unmount());globalThis.fetch=originalFetch;delete (globalThis as any).window;delete (globalThis as any).document;}
 });
+
+test('AI rich news update uses paragraphs and undo restores the original formatted content',async()=>{
+ const {window}=parseHTML('<html><body></body></html>');Object.assign(globalThis,{window,document:window.document,IS_REACT_ACT_ENVIRONMENT:true});
+ const {createRoot}=await import('react-dom/client');const host=window.document.createElement('div');const root=createRoot(host);const oldFetch=globalThis.fetch;const before='<h2>Career</h2><p><strong>Original fact.</strong></p>';let current=before;
+ globalThis.fetch=(async()=>new Response(JSON.stringify({draft:'New paragraph.\n\nSecond paragraph.',factsToCheck:[]}))) as any;
+ function Harness(){const[text,setText]=useState(before);current=text;return <SectionDraft disabled={false} context={{kind:'news',target:'news_details',currentTextFormat:'html',title:'News',description:'',heading:'Details',currentText:text,otherHeadings:[]}} onApply={setText}/>;}
+ try{await act(async()=>{root.render(<Harness/>)});await act(async()=>{host.querySelector('button')!.dispatchEvent(new window.Event('click',{bubbles:true}));});assert.equal(current,'<p>New paragraph.</p><p>Second paragraph.</p>');const undo=[...host.querySelectorAll('button')].find(b=>b.textContent==='Undo AI update')!;assert.equal(undo.hasAttribute('disabled'),false);await act(async()=>{undo.dispatchEvent(new window.Event('click',{bubbles:true}));});assert.equal(current,before);
+ }finally{await act(async()=>root.unmount());globalThis.fetch=oldFetch;delete (globalThis as any).window;delete (globalThis as any).document;}
+});

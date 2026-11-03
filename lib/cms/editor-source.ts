@@ -4,7 +4,7 @@ export function sourceParagraphs(text:string){const paragraphs:string[]=[];for(c
 export function fillEditorFromSource(kind:'articles'|'news',data:Record<string,any>,source:SourceReference):Record<string,any>{
  const sourceContent=[...(data.sourceContent||[]).filter((r:SourceReference)=>r.url!==source.url),source];
  if(sourceContent.length>5||sourceContent.reduce((n,r)=>n+r.text.length,0)>200000)throw new Error('Remove an older fetched source before adding more content.');
- if(kind==='news')return {...data,sourceContent,details:source.text,verified:false};
+ if(kind==='news')return {...data,sourceContent,details:source.text,detailsFormat:'plain',verified:false};
  const sections=(source.sections.length?source.sections:[{heading:'Story',body:[source.text]}]).map(s=>({heading:s.heading||'Story',body:sourceParagraphs(s.body.join('\n\n'))}));
  return {...data,sourceContent,sections,verified:false};
 }
