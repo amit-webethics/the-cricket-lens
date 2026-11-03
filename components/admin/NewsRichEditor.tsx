@@ -3,10 +3,10 @@ import {useEffect,useRef,useState} from 'react';
 import {EditorContent,useEditor,useEditorState} from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {newsDetailsHtml} from '../../lib/cms/rich-text';
-export default function NewsRichEditor({value,format,onChange,disabled=false}:{value:string;format?:string;onChange:(html:string)=>void;disabled?:boolean}){
+export default function NewsRichEditor({value,format,onChange,disabled=false,label='Full content for the news detail page'}:{label?:string;value:string;format?:string;onChange:(html:string)=>void;disabled?:boolean}){
  const[linkOpen,setLinkOpen]=useState(false);const[link,setLink]=useState('');const[error,setError]=useState('');
  const html=newsDetailsHtml(value,format);const lastContent=useRef(html);
- const editor=useEditor({extensions:[StarterKit.configure({heading:{levels:[2,3]},codeBlock:false,code:false,link:{openOnClick:false,autolink:false,protocols:['https','http','mailto']}})],content:html,immediatelyRender:false,editable:!disabled,editorProps:{attributes:{role:'textbox','aria-label':'Full content for the news detail page','aria-multiline':'true',class:'admin-rich-content'}},onUpdate:({editor})=>{const next=editor.isEmpty?'':editor.getHTML();lastContent.current=newsDetailsHtml(next,'html');onChange(next);}});
+ const editor=useEditor({extensions:[StarterKit.configure({heading:{levels:[2,3]},codeBlock:false,code:false,link:{openOnClick:false,autolink:false,protocols:['https','http','mailto']}})],content:html,immediatelyRender:false,editable:!disabled,editorProps:{attributes:{role:'textbox','aria-label':label,'aria-multiline':'true',class:'admin-rich-content'}},onUpdate:({editor})=>{const next=editor.isEmpty?'':editor.getHTML();lastContent.current=newsDetailsHtml(next,'html');onChange(next);}});
  useEffect(()=>{if(editor&&lastContent.current!==html){editor.commands.setContent(html,{emitUpdate:false});lastContent.current=html;}},[editor,html]);
  useEffect(()=>{editor?.setEditable(!disabled);},[editor,disabled]);
  const state=useEditorState({editor,selector:({editor})=>editor?{bold:editor.isActive('bold'),italic:editor.isActive('italic'),underline:editor.isActive('underline'),h2:editor.isActive('heading',{level:2}),h3:editor.isActive('heading',{level:3}),bullet:editor.isActive('bulletList'),ordered:editor.isActive('orderedList'),quote:editor.isActive('blockquote'),link:editor.isActive('link'),undo:editor.can().undo(),redo:editor.can().redo()}:null});
