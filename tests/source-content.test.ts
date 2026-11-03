@@ -31,7 +31,7 @@ test('AI regeneration receives fetched text and validates the news summary limit
  const raw={kind:'news' as const,mode:'regenerate' as const,title:'India squad',description:'',heading:'News summary',currentText:'Current summary',notes:'Focus on the changes',otherHeadings:[],sourceContent:[extractSource(html,url)]};
  const fake=async(options:any)=>{seen=options;return {output:{draft:'The selectors retained their core group while recalling two players.',factsToCheck:[]}};};
  const result=await generateSection(raw,[],fake as any);assert.match(result.draft,/selectors/);const prompt=JSON.parse(seen.prompt);assert.equal(prompt.mode,'regenerate');assert.match(prompt.sourceText[0].text,/coaching staff/);
- await assert.rejects(generateSection(raw,[],(async()=>({output:{draft:'x'.repeat(1201),factsToCheck:[]}})) as any),/DRAFT_INVALID_RESPONSE/);
+ await assert.rejects(generateSection(raw,[],(async()=>({output:{draft:'word '.repeat(251),factsToCheck:[]}})) as any),/DRAFT_INVALID_RESPONSE/);
 });
 function adapter(db:any){const q:any=async(s:TemplateStringsArray,...v:any[])=>{let text=s[0];for(let i=0;i<v.length;i++)text+=`$${i+1}`+s[i+1];return(await db.query(text,v)).rows;};q.json=JSON.stringify;q.begin=(fn:any)=>db.transaction((tx:any)=>fn(adapter(tx)));return q;}
 test('source content persists privately and is excluded from public records',async()=>{

@@ -90,3 +90,16 @@ Regenerate with AI works directly on the text in the selected field. A successfu
 News drafts can temporarily hold the full fetched text up to 100,000 characters. Published summaries are still limited to 1,200 characters. Regenerate produces a summary within that limit. Save and verify only when you are ready to publish. Article regeneration accepts up to 100,000 characters in the selected section. The model output-token ceiling is now 6,000 to allow structured responses from reasoning models; automatic retries remain disabled. Gateway failures now distinguish access, credit/budget, rate-limit, model configuration and incomplete-output errors where the SDK provides that information.
 
 This update requires a merge and redeploy, with the existing AI Gateway settings. No migration or Actor rebuild is needed. DOM interaction tests cover direct article/news updates, undo, concurrent edits and error preservation with mocked network responses. Live Gateway credentials and production interactions still need confirmation in the deployed environment.
+
+
+## News summary, details and Gateway access
+
+News now has two editable fields: a homepage sidebar summary (aim for around 200 words, maximum 250 when publishing) and full details for `/news/<slug>/`. Each has its own AI regeneration action. Fetch content fills the full details, preserving the independently edited summary. Existing news without details continues to display its saved summary on the detail page, and the editor preloads that older text as details when opened. The homepage links headlines and Read full story to the news detail page; full detail text is not passed to the homepage client component.
+
+Required markers are inline with labels throughout the admin. Source names, URLs and team fields are arranged in a compact responsive row. The source-fetch selector and action also use a compact layout.
+
+Gateway authentication accepts a normalized AI_GATEWAY_API_KEY or, if no key is configured, the deployment's existing VERCEL_OIDC_TOKEN through the SDK. AI_DRAFT_MODEL is still required. The app does not create credentials, switch away from an explicitly configured invalid key, or change Vercel account settings. Provider OpenAI keys (`sk-...`) are identified as the wrong credential type for the Gateway variable. Failure messages distinguish invalid credentials, denied team/model access, account verification, credits, throttling and incomplete output. Credential values are not logged.
+
+For persistent access errors, create a key in Vercel AI Gateway under the team owning this website, save it as AI_GATEWAY_API_KEY for Production and redeploy. AI_DRAFT_MODEL must be a model ID available to that account. A customer_verification_required error needs the verification/payment-method step in the Gateway dashboard. Alternatively, remove an obsolete explicit key to use authorized deployment identity when Gateway is enabled for that team. Deployment environment/log access was denied to this workspace, so current production credentials could not be verified and no live regeneration was performed.
+
+This update uses the existing JSON content field and needs no database migration. Merge and deploy. The Actor and schedule are unchanged.
