@@ -1,8 +1,9 @@
+import {richTextToPlain} from './rich-text';
 import {z} from 'zod';
 import {wordCount,NEWS_SUMMARY_MAX} from './news';
 import {sourceReferencesSchema} from './source-reference';
 import {generateText,Output,createGateway} from 'ai';
-export const sectionDraftInput=z.object({target:z.enum(['section','news_summary','news_details']).optional(),supportingText:z.string().max(100000).default(''),kind:z.enum(['articles','news']).default('articles'),mode:z.enum(['generate','regenerate']).default('generate'),sourceContent:sourceReferencesSchema.default([]),articleId:z.uuid().optional(),title:z.string().trim().min(1).max(220),description:z.string().max(1200),heading:z.string().trim().min(1).max(200),currentText:z.string().max(110000),notes:z.string().trim().max(8000).default(''),otherHeadings:z.array(z.string().max(200)).max(50)});
+export const sectionDraftInput=z.object({currentTextFormat:z.enum(['plain','html']).default('plain'),supportingTextFormat:z.enum(['plain','html']).default('plain'),target:z.enum(['section','news_summary','news_details']).optional(),supportingText:z.string().max(100000).default(''),kind:z.enum(['articles','news']).default('articles'),mode:z.enum(['generate','regenerate']).default('generate'),sourceContent:sourceReferencesSchema.default([]),articleId:z.uuid().optional(),title:z.string().trim().min(1).max(220),description:z.string().max(1200),heading:z.string().trim().min(1).max(200),currentText:z.string().max(110000),notes:z.string().trim().max(8000).default(''),otherHeadings:z.array(z.string().max(200)).max(50)});
 export const sectionDraftOutput=z.object({draft:z.string().trim().min(1).max(10000),factsToCheck:z.array(z.string().max(500)).max(20)});
 export async function generateSection(rawInput:z.input<typeof sectionDraftInput>,references:any[],generator:typeof generateText=generateText){
  const input=sectionDraftInput.parse(rawInput);
@@ -11,6 +12,8 @@ export async function generateSection(rawInput:z.input<typeof sectionDraftInput>
  const evidence=references.slice(0,20).map(r=>({publisher:r.source,url:r.url,headline:r.title,summary:r.summary,published:r.published}));
  const sourceText=(input.sourceContent||[]).map(r=>({publisher:r.publisher,url:r.url,title:r.title,fetchedAt:r.fetchedAt,text:r.text}));
  const {sourceContent:_,...context}=input;
+ if(input.currentTextFormat==='html')context.currentText=richTextToPlain(context.currentText);
+ if(input.supportingTextFormat==='html')context.supportingText=richTextToPlain(context.supportingText);
  const summaryTarget=input.kind==='news'&&input.target!=='news_details';
  const outputSchema=summaryTarget?sectionDraftOutput.extend({draft:z.string().trim().min(1).max(5000).refine(text=>wordCount(text)<=NEWS_SUMMARY_MAX,'Keep the sidebar summary under 250 words')}):sectionDraftOutput;
  const result=await generator({
