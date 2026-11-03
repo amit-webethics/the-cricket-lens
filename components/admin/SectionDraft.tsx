@@ -1,23 +1,25 @@
 'use client';
-import {useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {SourceReference} from '../../lib/cms/source-reference';
 import {api} from './AdminShell';
 type Context={kind?:'articles'|'news';sourceContent?:SourceReference[];articleId?:string;title:string;description:string;heading:string;currentText:string;otherHeadings:string[]};
 export default function SectionDraft({context,disabled,onApply}:{context:Context;disabled:boolean;onApply:(text:string)=>void}){
- const[notes,setNotes]=useState('');const[busy,setBusy]=useState(false);const[error,setError]=useState('');
- const[suggestion,setSuggestion]=useState<{draft:string;factsToCheck:string[];snapshot:string}|null>(null);
- const request=useRef(false);const snapshot=JSON.stringify({...context,notes});
- async function generate(){if(request.current)return;request.current=true;setBusy(true);setError('');setSuggestion(null);const started=snapshot;
-  try{const result=await api('draft-section',{method:'POST',body:JSON.stringify({...JSON.parse(started),mode:context.currentText.trim()?'regenerate':'generate'})});setSuggestion({...result,snapshot:started});}catch(e:any){setError(e.message);}finally{request.current=false;setBusy(false);}}
- const stale=suggestion&&suggestion.snapshot!==snapshot;
- return <div className="admin-fields"><label>Facts or instructions for this section<textarea rows={3} maxLength={8000} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Add verified facts and the angle you want to explore. Fetched source text and imported summaries are included as reference material."/></label>
- <button type="button" className="admin-secondary" disabled={disabled||busy||!context.title.trim()||!context.heading.trim()} onClick={generate}>{busy?'Generating…':context.currentText.trim()?'Regenerate with AI':'Generate draft'}</button>
- <small>Uses fetched source text, available summaries, current text and your notes. Review the suggestion before using it.</small>
+ const[busy,setBusy]=useState(false);const[error,setError]=useState('');const[checks,setChecks]=useState<string[]>([]);
+ const[undo,setUndo]=useState<{before:string;after:string}|null>(null);
+ const request=useRef(false);const alive=useRef(true);const snapshot=JSON.stringify(context);const latest=useRef({snapshot,onApply});
+ useEffect(()=>{latest.current={snapshot,onApply};},[snapshot,onApply]);
+ useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+ async function regenerate(){if(request.current)return;request.current=true;setBusy(true);setError('');setChecks([]);const started=snapshot;const before=context.currentText;
+  try{const result=await api('draft-section',{method:'POST',body:JSON.stringify({...context,sourceContent:context.sourceContent?.map(ref=>({...ref,sections:[]})),notes:'',mode:before.trim()?'regenerate':'generate'})});
+   if(!alive.current)return;
+   if(latest.current.snapshot!==started){setError('Your text changed while AI was working. Click Regenerate again to update the latest text.');return;}
+   const text=String(result.draft||'').trim().replace(/\s*\n\s*/g,' ');if(!text)throw new Error('AI returned no text. Your existing content is unchanged.');
+   latest.current.onApply(text);setUndo({before,after:text});setChecks(Array.isArray(result.factsToCheck)?result.factsToCheck:[]);
+  }catch(e:any){if(alive.current)setError(e.message);}finally{request.current=false;if(alive.current)setBusy(false);}
+ }
+ return <div className="admin-fields"><div style={{display:'flex',gap:12,flexWrap:'wrap'}}><button type="button" className="admin-secondary" disabled={disabled||busy||!context.title.trim()||!context.heading.trim()} onClick={regenerate}>{busy?'Regenerating…':context.currentText.trim()?'Regenerate with AI':'Generate draft'}</button>
+ {undo&&<button type="button" className="admin-quiet" disabled={disabled||busy||context.currentText!==undo.after} onClick={()=>{onApply(undo.before);setUndo(null);setChecks([]);}}>Undo AI update</button>}</div>
  {error&&<p className="admin-alert error" role="alert">{error}</p>}
- {suggestion&&<div className="admin-fields"><label>Generated suggestion<textarea rows={7} maxLength={context.kind==='news'?1200:10000} value={suggestion.draft} onChange={e=>setSuggestion({...suggestion,draft:e.target.value})}/></label>
- {suggestion.factsToCheck.length>0&&<div><b>Check before publishing</b><ul>{suggestion.factsToCheck.map((fact,i)=><li key={i}>{fact}</li>)}</ul></div>}
- {stale&&<p role="status">This section or its context has changed. Generate a fresh suggestion.</p>}
- <button type="button" className="admin-secondary" disabled={!!stale||busy||!suggestion.draft.trim()} onClick={()=>{onApply(suggestion.draft.trim().replace(/\s*\n\s*/g,' '));setSuggestion(null);}}>Use draft in this section</button>
- <button type="button" className="admin-quiet" onClick={()=>setSuggestion(null)}>Discard suggestion</button></div>}
+ {checks.length>0&&<details><summary>Facts to check before publishing</summary><ul>{checks.map((fact,i)=><li key={i}>{fact}</li>)}</ul></details>}
  </div>;
 }
