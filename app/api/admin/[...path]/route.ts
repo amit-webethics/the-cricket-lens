@@ -17,13 +17,13 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
  try{return json({source:await fetchSourceContent(body.url)});}catch(e:any){console.error('Source fetch failed',{code:e.message?.startsWith('SOURCE_')?e.message:e.name});return json({error:sourceErrorMessage(e.message)},e.message==='SOURCE_URL'?400:502);}
  }
  if(path[0]==='draft-section'&&req.method==='POST'){
- const {sectionDraftInput,generateSection}=await import('../../../../lib/cms/drafting');
+ const {sectionDraftInput,generateSection,draftErrorMessage}=await import('../../../../lib/cms/drafting');
  const raw=await req.text();if(Buffer.byteLength(raw)>500000)return json({error:'Keep the drafting context below 500 KB.'},413);
  const input=sectionDraftInput.parse(JSON.parse(raw));
  const references=input.articleId?await database()`SELECT data FROM cms_collected WHERE entry_id=${input.articleId} OR COALESCE(group_id,id) IN (SELECT COALESCE(group_id,id) FROM cms_collected WHERE entry_id=${input.articleId})`:[];
  try{return json(await generateSection(input,references.map(r=>r.data)));}catch(e:any){
   console.error('Section drafting failed',{code:e.message?.startsWith('DRAFT_')?e.message:e.name});
-  const message=e.message==='DRAFT_NOT_CONFIGURED'?'Draft generation needs AI_GATEWAY_API_KEY and AI_DRAFT_MODEL in Vercel.':e.message==='DRAFT_NEEDS_FACTS'?'Add verified facts or section notes before generating.':'Draft generation could not complete. Your writing is unchanged. Please try again.';
+  const message=draftErrorMessage(e);
   return json({error:message},e.message==='DRAFT_NEEDS_FACTS'?400:503);
  }
  }
