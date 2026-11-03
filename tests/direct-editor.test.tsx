@@ -7,10 +7,10 @@ import {fillEditorFromSource} from '../lib/cms/editor-source';
 import {schemas} from '../lib/cms/schema';
 import {draftErrorMessage} from '../lib/cms/drafting';
 const source={url:'https://www.cricbuzz.com/cricket-news/123/squad',publisher:'Cricbuzz',title:'Squad update',fetchedAt:'2026-11-03T05:00:00Z',text:'Full source paragraph one.\n\nFull source paragraph two.',sections:[{heading:'Selection',body:['Full source paragraph one.','Full source paragraph two.']}],warning:''};
-test('fetch fills existing article paragraphs and news summary, keeps provenance and clears verification',()=>{
+test('fetch fills existing article paragraphs and news details, keeps provenance and clears verification',()=>{
  const data={title:'My title',verified:true,sections:[{heading:'Old',body:['Old paragraph']}],summary:'Old summary',sourceContent:[]};
  const article=fillEditorFromSource('articles',data,source);assert.equal(article.sections[0].body.join('\n\n'),source.text);assert.equal(article.sections[0].heading,'Selection');assert.equal(article.verified,false);assert.equal(article.title,'My title');assert.equal(data.sections[0].body[0],'Old paragraph');assert.equal(article.sourceContent[0].publisher,'Cricbuzz');
- const news=fillEditorFromSource('news',data,source);assert.equal(news.summary,source.text);assert.equal(news.verified,false);
+ const news=fillEditorFromSource('news',data,source);assert.equal(news.details,source.text);assert.equal(news.summary,'Old summary');assert.equal(news.verified,false);
  const long=source.text.repeat(100);const draft={title:'News',slug:'news',status:'draft',summary:long,sourceLabel:'Cricbuzz',sourceUrl:source.url,verified:false};
  assert.equal(schemas.news.safeParse(draft).success,true);assert.equal(schemas.news.safeParse({...draft,status:'published',verified:true}).success,false);
  assert.equal(draftErrorMessage({statusCode:402}).includes('credits'),true);assert.equal(draftErrorMessage({statusCode:401}).includes('API key'),true);
