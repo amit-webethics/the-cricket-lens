@@ -17,11 +17,12 @@ jobs:
         run: |
           python3 scripts/import_ipl_full.py
           python3 scripts/import_ipl_cricsheet.py
+          python3 scripts/build_ipl_records.py
       - name: Commit updated IPL statistics
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/data/ipl-stats.json lib/data/ipl-matches.zip lib/data/ipl-manifest.json
+          git add lib/data/ipl-stats.json lib/data/ipl-matches.zip lib/data/ipl-manifest.json lib/data/ipl-records.json
           if ! git diff --cached --quiet; then
             git commit -m "Import complete IPL history from Cricsheet"
             git push
