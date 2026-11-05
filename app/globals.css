@@ -227,3 +227,38 @@ body[data-theme="dark"] .article-page .source-note a,body[data-theme="dark"] .ar
 body[data-theme="dark"] .footer-main,body[data-theme="dark"] .footer-bottom{color:#d9def0}
 body[data-theme="dark"] input,body[data-theme="dark"] select,body[data-theme="dark"] textarea{background:#242a3d;color:#f0f2ff;border-color:#505872}
 @media(max-width:650px){.theme-toggle{width:32px;height:32px}}
+
+
+/* IPL editorial hub */
+.ipl-page{padding:24px 0 55px;min-height:65vh}
+.ipl-intro{padding:26px 28px;background:#33319c;color:#fff}
+.ipl-kicker{font-size:10px;letter-spacing:1.2px;font-weight:700;color:#dcdcff}
+.ipl-intro h1{font-size:36px;line-height:1.2;margin:12px 0 8px;font-weight:700}
+.ipl-intro p{font-size:14px;color:#e5e4ff;margin:0 0 22px}
+.ipl-jump{display:flex;flex-wrap:wrap;gap:10px}
+.ipl-jump a{border:1px solid #b8b7ef;color:#fff;padding:9px 13px;font-size:12px;font-weight:600}
+.ipl-jump a:hover{background:#fff;color:#33319c}
+.ipl-content{display:grid;gap:24px;padding-top:24px}
+.ipl-section{background:#fff;border:1px solid #e3e5ef;padding:22px 24px;scroll-margin-top:20px}
+.ipl-section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:2px solid #33319c;padding-bottom:12px;margin-bottom:14px}
+.ipl-section-heading h2{font-size:21px;line-height:1.35;margin:0;color:#25265d;font-weight:700}
+.ipl-section-heading span{font-size:11px;color:#69738a}
+.ipl-story-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}
+.ipl-story-list article{padding:17px 0;border-bottom:1px solid #e3e5ef}
+.ipl-story-list h3{font-size:16px;line-height:1.45;margin:7px 0;font-weight:600}
+.ipl-story-list h3 a:hover{color:#33319c;text-decoration:underline}
+.ipl-story-list p{font-size:13px;line-height:1.65;color:#657085;margin:0}
+.ipl-date{font-size:11px;color:#7b849a}
+.ipl-empty,.ipl-stats-intro{font-size:13px;line-height:1.75;color:#657085}
+.ipl-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:20px}
+.ipl-stats-grid>div{padding:18px;border:1px solid #e3e5ef;background:#f8f9fc}
+.ipl-stats-grid h3{font-size:15px;margin:0 0 8px;color:#25265d}
+.ipl-stats-grid p{font-size:12px;color:#657085;line-height:1.5;min-height:38px}
+.ipl-stats-grid span{font-size:11px;color:#797f9c}
+body[data-theme="dark"] .ipl-section{background:#1b2030;border-color:#383f56}
+body[data-theme="dark"] .ipl-section-heading h2,body[data-theme="dark"] .ipl-stats-grid h3{color:#f0f2ff}
+body[data-theme="dark"] .ipl-story-list article,body[data-theme="dark"] .ipl-stats-grid>div{border-color:#383f56}
+body[data-theme="dark"] .ipl-stats-grid>div{background:#252a40}
+body[data-theme="dark"] .ipl-story-list p,body[data-theme="dark"] .ipl-stats-grid p,body[data-theme="dark"] .ipl-empty,body[data-theme="dark"] .ipl-stats-intro{color:#b3bdd4}
+@media(max-width:800px){.ipl-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.ipl-page{padding-top:12px}.ipl-intro{padding:22px 18px}.ipl-section{padding:17px}.ipl-story-list{grid-template-columns:1fr}.ipl-stats-grid{grid-template-columns:1fr 1fr;gap:9px}.ipl-stats-grid>div{padding:12px}.ipl-section-heading{align-items:flex-start;flex-direction:column}}
