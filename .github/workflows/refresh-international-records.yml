@@ -1,0 +1,33 @@
+name: Refresh men's international cricket records
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 1'
+permissions:
+  contents: write
+jobs:
+  international-records:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import men's ODI T20I and Test archives
+        run: |
+          python3 scripts/import_ipl_full.py odi https://cricsheet.org/downloads/odis_male_json.zip
+          python3 scripts/build_ipl_records.py odi
+          python3 scripts/import_ipl_full.py t20i https://cricsheet.org/downloads/t20s_male_json.zip
+          python3 scripts/build_ipl_records.py t20i
+          python3 scripts/import_ipl_full.py test https://cricsheet.org/downloads/tests_male_json.zip
+          python3 scripts/build_ipl_records.py test
+      - name: Commit historical datasets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/data/odi-*.json lib/data/odi-matches.zip lib/data/t20i-*.json lib/data/t20i-matches.zip lib/data/test-*.json lib/data/test-matches.zip
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh men's ODI T20I and Test records from Cricsheet"
+            git push
+          fi
