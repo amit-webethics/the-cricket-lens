@@ -29,7 +29,55 @@ export default function IPLRecords({records}:{records:Records}){
  return <div className="ipl-records">
  <div className="ipl-record-controls"><label>Season <select value={season} onChange={e=>{setSeason(e.target.value);setLimit(25)}}><option value="all">All seasons</option>{seasons.map(s=><option key={s} value={s}>{s}</option>)}</select></label><label>Find player <input type="search" placeholder="Search players" value={search} onChange={e=>{setSearch(e.target.value);setLimit(25)}}/></label></div>
  <div className="ipl-record-explorer"><aside className="ipl-record-menu" aria-label="IPL statistics categories"><h3>Batting</h3>{batting.map(m=><button key={m.id} className={metric===m.id?'active':''} onClick={()=>selectMetric(m.id)}>{m.label}<span aria-hidden="true">›</span></button>)}<h3>Bowling</h3>{bowling.map(m=><button key={m.id} className={metric===m.id?'active':''} onClick={()=>selectMetric(m.id)}>{m.label}<span aria-hidden="true">›</span></button>)}</aside>
- <div className="ipl-record-results"><div className="ipl-section-heading"><h2>{metricLabel}</h2><span>{season==='all'?'All seasons':season}</span></div><div className="ipl-table-scroll"><table className="ipl-record-table"><thead><tr><th>#</th><th>Player</th><th>Matches</th><th>Inns</th>{isBatting?<><th>Runs</th><th>Avg</th><th>SR</th><th>4s</th><th>6s</th></>:<><th>Wkts</th><th>Avg</th><th>Econ</th><th>Best</th></>}<th>{metricLabel}</th></tr></thead><tbody>{sorted.slice(0,limit).map((p,i)=><tr key={p.id}><td>{i+1}</td><td><Link href={`/ipl/players/${encodeURIComponent(p.id)}/`}>{p.name}</Link></td><td>{p.matches}</td><td>{isBatting?p.innings||'—':p.bowlingInnings||'—'}</td>{isBatting?<><td>{fmt(p.runs)}</td><td>{shown(p,'average')}</td><td>{shown(p,'strikeRate')}</td><td>{p.fours}</td><td>{p.sixes}</></>:<><td>{p.wickets}</td><td>{shown(p,'bowlingAverage')}</td><td>{shown(p,'economy')}</td><td>{shown(p,'bestBowling')}</></>}<td><b>{shown(p,metric)}</b></td></tr>)}</tbody></table></div>{!sorted.length&&<p className="ipl-empty">No matching player records.</p>}{sorted.length>limit&&<button className="ipl-more" onClick={()=>setLimit(v=>v+25)}>Show more players</button>}<p className="ipl-stats-intro">Qualification for rate records: {season==='all'?'minimum 10 batting innings / 200 balls for batting strike rate, 20 wickets for bowling averages, or 120 legal balls for economy':'minimum 3 batting innings / 50 balls for batting strike rate, 5 wickets for bowling averages, or 30 legal balls for economy'}. These are editorial thresholds, not official IPL eligibility rules.</p></div></div>
+  <div className="ipl-record-results">
+    <div className="ipl-section-heading"><h2>{metricLabel}</h2><span>{season === 'all' ? 'All seasons' : season}</span></div>
+    <div className="ipl-table-scroll">
+      <table className="ipl-record-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Player</th><th>Matches</th><th>Inns</th>
+            {isBatting ? (
+              <><th>Runs</th><th>Avg</th><th>SR</th><th>4s</th><th>6s</th></>
+            ) : (
+              <><th>Wkts</th><th>Avg</th><th>Econ</th><th>Best</th></>
+            )}
+            <th>{metricLabel}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.slice(0, limit).map((p, i) => (
+            <tr key={p.id}>
+              <td>{i + 1}</td>
+              <td><Link href={`/ipl/players/${encodeURIComponent(p.id)}/`}>{p.name}</Link></td>
+              <td>{p.matches}</td>
+              <td>{isBatting ? (p.innings || '—') : (p.bowlingInnings || '—')}</td>
+              {isBatting ? (
+                <>
+                  <td>{fmt(p.runs)}</td>
+                  <td>{shown(p, 'average')}</td>
+                  <td>{shown(p, 'strikeRate')}</td>
+                  <td>{p.fours}</td>
+                  <td>{p.sixes}</td>
+                </>
+              ) : (
+                <>
+                  <td>{p.wickets}</td>
+                  <td>{shown(p, 'bowlingAverage')}</td>
+                  <td>{shown(p, 'economy')}</td>
+                  <td>{shown(p, 'bestBowling')}</td>
+                </>
+              )}
+              <td><b>{shown(p, metric)}</b></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {!sorted.length && <p className="ipl-empty">No matching player records.</p>}
+    {sorted.length > limit && <button className="ipl-more" onClick={() => setLimit(v => v + 25)}>Show more players</button>}
+    <p className="ipl-stats-intro">Qualification for rate records: {season === 'all' ? 'minimum 10 batting innings / 200 balls for batting strike rate, 20 wickets for bowling averages, or 120 legal balls for economy' : 'minimum 3 batting innings / 50 balls for batting strike rate, 5 wickets for bowling averages, or 30 legal balls for economy'}. These are editorial thresholds, not official IPL eligibility rules.</p>
+  </div>
+  </div>
  <div className="ipl-section-heading" style={{marginTop:32}}><h2>Historical Matches</h2><span>{matches.length} matches</span></div><div className="ipl-match-list">{matches.slice(0,20).map(m=><Link href={`/ipl/matches/${m.id}/`} key={m.id}><span>{m.date}</span><strong>{m.teams.join(' vs ')}</strong><small>{m.outcome?.winner?m.outcome.winner+' won':m.outcome?.result||'Match details'} · {m.venue}</small></Link>)}</div>{matches.length>20&&<p className="ipl-stats-intro">Showing the 20 most recent matches for the selected season.</p>}
  </div>;
 }
