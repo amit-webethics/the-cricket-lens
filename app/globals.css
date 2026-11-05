@@ -262,3 +262,33 @@ body[data-theme="dark"] .ipl-stats-grid>div{background:#252a40}
 body[data-theme="dark"] .ipl-story-list p,body[data-theme="dark"] .ipl-stats-grid p,body[data-theme="dark"] .ipl-empty,body[data-theme="dark"] .ipl-stats-intro{color:#b3bdd4}
 @media(max-width:800px){.ipl-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.ipl-page{padding-top:12px}.ipl-intro{padding:22px 18px}.ipl-section{padding:17px}.ipl-story-list{grid-template-columns:1fr}.ipl-stats-grid{grid-template-columns:1fr 1fr;gap:9px}.ipl-stats-grid>div{padding:12px}.ipl-section-heading{align-items:flex-start;flex-direction:column}}
+
+
+/* IPL record explorer */
+.ipl-record-controls{display:flex;gap:16px;flex-wrap:wrap;margin:20px 0}
+.ipl-record-controls label{font-size:12px;font-weight:600;display:flex;flex-direction:column;gap:7px}
+.ipl-record-controls select,.ipl-record-controls input{min-width:170px;padding:10px 12px;border:1px solid #ccd0dd;background:#fff;color:#20243b;border-radius:4px}
+.ipl-record-tabs{display:flex;gap:8px;margin:14px 0}
+.ipl-record-tabs button,.ipl-more{cursor:pointer;padding:10px 17px;border:1px solid #33319c;background:transparent;color:#33319c;border-radius:4px;font-size:13px;font-weight:600}
+.ipl-record-tabs button.active,.ipl-more:hover{background:#33319c;color:white}
+.ipl-table-scroll{overflow-x:auto;width:100%}
+.ipl-record-table{border-collapse:collapse;width:100%;font-size:13px;text-align:left;white-space:nowrap}
+.ipl-record-table th{background:#f0f0fc;color:#29266f;font-weight:700;padding:12px 10px}
+.ipl-record-table td{padding:11px 10px;border-bottom:1px solid #e5e6ef}
+.ipl-record-table td a{color:#33319c;font-weight:600}
+.ipl-record-table td a:hover{text-decoration:underline}
+.ipl-more{margin-top:18px}
+.ipl-match-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ipl-match-list a{border:1px solid #e5e6ef;padding:14px;display:flex;flex-direction:column;gap:6px}
+.ipl-match-list a:hover{border-color:#33319c}
+.ipl-match-list span,.ipl-match-list small{font-size:11px;color:#68728a}
+.ipl-match-list strong{font-size:13px}
+.ipl-player-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ipl-player-metrics>div{background:#f4f5fb;padding:15px;display:flex;flex-direction:column;gap:8px}
+.ipl-player-metrics span{font-size:12px;color:#68728a}
+.ipl-player-metrics strong{font-size:21px}
+body[data-theme="dark"] .ipl-record-table th,body[data-theme="dark"] .ipl-player-metrics>div{background:#292d48;color:#f0f2ff}
+body[data-theme="dark"] .ipl-record-controls select,body[data-theme="dark"] .ipl-record-controls input{background:#292d48;color:#fff;border-color:#515772}
+body[data-theme="dark"] .ipl-record-table td,body[data-theme="dark"] .ipl-match-list a{border-color:#454b63}
+body[data-theme="dark"] .ipl-record-table td a{color:#c1bfff}
+@media(max-width:650px){.ipl-match-list{grid-template-columns:1fr}.ipl-player-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
