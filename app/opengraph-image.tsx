@@ -1,0 +1,5 @@
+import {ImageResponse} from 'next/og';
+export const alt='The Cricket Lens — The game. The stories. Our perspective.';
+export const size={width:1200,height:630};
+export const contentType='image/png';
+export default function Image(){return new ImageResponse(<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',background:'#33319c',color:'white',fontFamily:'sans-serif'}}><div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:25}}><svg width="170" height="145" viewBox="0 0 128 128"><path d="M20 41h22l10-13h28l10 13h18a8 8 0 0 1 8 8v48a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8V49a8 8 0 0 1 8-8Z" fill="none" stroke="white" strokeWidth="7"/><circle cx="64" cy="72" r="31" fill="white"/><circle cx="64" cy="72" r="26" fill="#c71932"/><path d="M49 51c10 17 21 28 37 35M43 59c10 17 21 28 37 35" fill="none" stroke="white" strokeWidth="3"/></svg><div style={{fontSize:76,fontWeight:700,letterSpacing:-3}}>The Cricket Lens</div><div style={{fontSize:29,opacity:.9}}>The game. The stories. Our perspective.</div></div></div>,size)}
