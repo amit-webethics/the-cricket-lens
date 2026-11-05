@@ -173,3 +173,16 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 @media(max-width:950px) and (min-width:801px){.article-page .detail-side-story{grid-template-columns:76px minmax(0,1fr);gap:9px;padding:11px}.article-page .detail-side-story img{width:76px;height:60px}}
 @media(max-width:800px){.article-page .detail-right-sidebar{margin-top:26px}.article-page .detail-side-story{grid-template-columns:100px minmax(0,1fr)}.article-page .detail-side-story img{width:100px;height:72px}}
 @media(prefers-reduced-motion:reduce){.article-page .detail-side-story{transition:none}}
+
+
+/* Detail sidebar mirrors homepage Recent Articles list */
+.article-page .detail-right-sidebar{border:1px solid #e3e5ef;border-radius:0;box-shadow:none;background:#fff;overflow:hidden}
+.article-page .detail-right-sidebar h2{background:#33319c;color:#fff;font-size:15px;font-weight:700;padding:12px 14px;line-height:1.4}
+.article-page .detail-recent-list{padding:0 12px}
+.article-page .detail-side-story{display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:13px 0;border-bottom:1px solid #e0e3ed;background:transparent;color:#121a32;text-decoration:none;transition:none}
+.article-page .detail-side-story:last-child{border-bottom:0}
+.article-page .detail-story-title{display:block;overflow:visible;-webkit-line-clamp:unset;font-size:13px;font-weight:600;line-height:1.5}
+.article-page .detail-story-age{display:block;font-size:10px;font-weight:400;line-height:1.4;color:#7c8499}
+.article-page .detail-side-story:hover,.article-page .detail-side-story:focus-visible{background:transparent;color:#33319c}
+.article-page .detail-side-story:focus-visible{outline:2px solid #33319c;outline-offset:2px}
+@media(max-width:950px){.article-page .detail-side-story{display:flex;padding:12px 0;gap:5px}}
