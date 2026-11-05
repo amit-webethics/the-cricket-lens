@@ -192,3 +192,10 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 .shell{width:100%;max-width:1200px;margin-left:auto;margin-right:auto;padding-left:24px;padding-right:24px}
 .article-page{max-width:100%;width:100%}
 @media(max-width:650px){.shell{padding-left:16px;padding-right:16px}}
+
+
+/* Fine-tune spacing highlighted around header/navigation */
+.shell{padding-top:0}
+.header{padding-top:24px;padding-bottom:13px}
+.publication-grid{padding-top:12px}
+@media(max-width:650px){.header{padding-top:18px;padding-bottom:11px}.publication-grid{padding-top:10px}}
