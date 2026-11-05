@@ -92,3 +92,33 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 .load-stories{margin-top:12px}
 @media(max-width:950px){.publication-grid{grid-template-columns:minmax(0,1fr) 230px;gap:12px}.recent-list{padding:0 12px}}
 @media(max-width:650px){.publication-grid{display:flex;gap:16px;padding-top:12px}.feed-card .card-art{height:200px}.feed-card.lead-card .card-art{height:225px}.feed-copy{padding:12px 14px}.recent-list{display:grid;grid-template-columns:1fr}.recent-list>a{padding:12px 0}}
+
+
+/* Homepage: a little breathing room below the main navigation */
+.publication-grid{padding-top:24px}
+
+/* Compact article and news reading pages */
+.article-page{padding-top:16px;padding-bottom:26px}
+.article-page .back-link{padding:12px 0 18px;font-size:12px}
+.article-page .article-heading{margin-bottom:20px}
+.article-page .article-heading h1{margin:10px 0 12px;line-height:1.22}
+.article-page .article-meta{margin-bottom:12px;font-size:12px;gap:6px}
+.article-page .article-heading .standfirst{font-size:15px;line-height:1.55}
+.article-page .article-image{max-width:1050px}
+.article-page .article-image>.article-cover,.article-page .article-image>.art{aspect-ratio:16/8;max-height:430px;object-fit:cover}
+.article-page .article-content-layout{margin:28px auto 40px;grid-template-columns:185px minmax(0,1fr);gap:36px}
+.article-page .article-content-layout aside{padding-top:12px}
+.article-page .article-content-layout aside>a{padding:9px 0}
+.article-page .article-body section{margin-bottom:24px}
+.article-page .article-body h2{margin-bottom:10px}
+.article-page .article-body section p{margin-bottom:12px;line-height:1.7}
+.article-page .article-end{margin:20px 0}
+.article-page .source-note{padding:16px 18px}
+.article-page .source-note p{margin:5px 0}
+.article-page .related{margin-top:28px}
+.article-page .related-grid{gap:12px}
+.news-detail-page .article-content-layout{grid-template-columns:185px minmax(0,1fr);gap:28px}
+.news-detail-page .news-formatted-content p,.news-detail-page .news-formatted-content li{line-height:1.65;margin:0 0 12px}
+.news-detail-page .news-formatted-content h2{margin:16px 0 8px}
+@media(max-width:800px){.article-page .article-content-layout,.news-detail-page .article-content-layout{display:block;margin:24px auto 35px}.article-page .article-content-layout aside{display:none}.article-page .article-image>.article-cover,.article-page .article-image>.art{aspect-ratio:16/9}}
+@media(max-width:650px){.publication-grid{padding-top:18px}.article-page{padding-top:10px}.article-page .back-link{padding:10px 0 16px}.article-page .article-heading{margin-bottom:16px}.article-page .article-heading .standfirst{font-size:15px}.article-page .article-content-layout,.news-detail-page .article-content-layout{margin:20px auto 30px}.article-page .article-body section{margin-bottom:22px}.article-page .article-image>.article-cover,.article-page .article-image>.art{aspect-ratio:4/3}}
