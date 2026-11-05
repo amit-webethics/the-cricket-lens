@@ -19,7 +19,12 @@ DEST = ROOT / "lib" / "data"
 SOURCE = "https://cricsheet.org/downloads/ipl_json.zip"
 
 def main():
-    if len(sys.argv) > 1:
+    prefix = sys.argv[1] if len(sys.argv) > 1 else "ipl"
+    source_url = sys.argv[2] if len(sys.argv) > 2 else SOURCE
+    if len(sys.argv) > 2:
+        with urllib.request.urlopen(source_url, timeout=120) as response:
+            data = response.read()
+    elif len(sys.argv) > 1 and pathlib.Path(sys.argv[1]).exists():
         data = pathlib.Path(sys.argv[1]).read_bytes()
     else:
         with urllib.request.urlopen(SOURCE, timeout=120) as response:
@@ -53,20 +58,20 @@ def main():
     if not valid:
         raise RuntimeError("No IPL JSON matches found")
     DEST.mkdir(parents=True, exist_ok=True)
-    archive_path = DEST / "ipl-matches.zip"
+    archive_path = DEST / (prefix + "-matches.zip")
     with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as out:
         for filename, content in sorted(valid.items()):
             out.writestr(filename, content)
     metadata = {
         "source": "Cricsheet",
         "sourceUrl": "https://cricsheet.org/",
-        "downloadUrl": SOURCE,
+        "downloadUrl": source_url,
         "license": "ODC-BY 1.0",
         "matchCount": len(manifest),
         "matches": manifest,
         "note": "Original match JSON retained in ipl-matches.zip; data subject to Cricsheet coverage and corrections."
     }
-    (DEST / "ipl-manifest.json").write_text(json.dumps(metadata, ensure_ascii=False, separators=(",", ":"))+"\n", encoding="utf-8")
+    (DEST / (prefix + "-manifest.json")).write_text(json.dumps(metadata, ensure_ascii=False, separators=(",", ":"))+"\n", encoding="utf-8")
     print(f"Imported {len(manifest)} IPL matches; {archive_path.stat().st_size} compressed bytes")
 
 if __name__ == "__main__":
