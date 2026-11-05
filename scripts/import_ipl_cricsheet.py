@@ -37,9 +37,7 @@ def main():
             except (ValueError, UnicodeDecodeError):
                 continue
             info = match.get("info", {})
-            if not info.get("dates") or not info.get("innings"):
-                pass
-            if not match.get("innings"):
+            if not info.get("dates") or not match.get("innings"):
                 continue
             mid = pathlib.Path(filename).stem
             if mid in match_ids:
