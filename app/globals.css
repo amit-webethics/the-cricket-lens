@@ -67,3 +67,28 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 
 .news-cover{max-width:760px;margin:24px auto}.news-cover img{display:block;width:100%;max-height:560px;object-fit:contain;background:#f5f6fa}.news-cover figcaption{font-size:12px;line-height:1.6;color:#62677c;margin-top:8px;overflow-wrap:anywhere}
 .news-formatted-content p,.news-formatted-content li{font-size:14px;line-height:1.8}.news-formatted-content h2{font-size:20px;line-height:1.4}.news-formatted-content h3{font-size:17px;line-height:1.4}.news-formatted-content ul,.news-formatted-content ol{padding-left:24px;margin:16px 0}.news-formatted-content ul{list-style:disc}.news-formatted-content ol{list-style:decimal}.news-formatted-content blockquote{border-left:3px solid #33319c;margin:20px 0;padding:4px 0 4px 18px}.news-formatted-content a{color:#33319c;text-decoration:underline;overflow-wrap:anywhere}
+
+
+/* Compact news-style homepage layout */
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.publication-grid{gap:12px;padding-top:12px;padding-bottom:28px;grid-template-columns:minmax(175px,.8fr) minmax(0,2.2fr) minmax(210px,1fr)}
+.panel-title{padding:11px 13px}
+.recent-list{padding:0 12px}
+.recent-list>a{padding:12px 0;gap:0}
+.recent-list h3{margin:0 0 6px;line-height:1.45}
+.recent-list .meta{font-size:10px}
+.article-feed{gap:12px}
+.feed-card .card-art{height:210px}
+.feed-card.lead-card .card-art{height:250px}
+.feed-copy{padding:13px 15px}
+.feed-copy h2,.lead-card h2{margin:4px 0 7px;line-height:1.4}
+.feed-copy>p{margin:0;font-size:12px;line-height:1.55}
+.public-news-list{padding:0 12px}
+.public-news-list>article{padding:12px 0}
+.public-news-list h3{margin:0 0 7px;line-height:1.4}
+.public-news-list p{margin:0 0 8px;line-height:1.55}
+.public-news-list .news-read-more{margin:0 0 7px}
+.editorial-box{padding:16px 13px}
+.load-stories{margin-top:12px}
+@media(max-width:950px){.publication-grid{grid-template-columns:minmax(0,1fr) 230px;gap:12px}.recent-list{padding:0 12px}}
+@media(max-width:650px){.publication-grid{display:flex;gap:16px;padding-top:12px}.feed-card .card-art{height:200px}.feed-card.lead-card .card-art{height:225px}.feed-copy{padding:12px 14px}.recent-list{display:grid;grid-template-columns:1fr}.recent-list>a{padding:12px 0}}
