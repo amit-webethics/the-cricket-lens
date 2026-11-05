@@ -3,6 +3,7 @@
 import collections
 import json
 import pathlib
+import sys
 import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -14,11 +15,12 @@ def player():
             "conceded": 0, "legalBalls": 0, "dismissals": 0, "matches": 0, "innings": 0, "bowlingInnings": 0, "highest": 0, "hundreds": 0, "fifties": 0, "nineties": 0, "fiveWickets": 0, "bestWickets": 0, "bestRuns": 0}
 
 def main():
+    prefix = sys.argv[1] if len(sys.argv) > 1 else "ipl"
     by_season = collections.defaultdict(lambda: collections.defaultdict(player))
     all_players = collections.defaultdict(player)
     names = {}
     matches = []
-    with zipfile.ZipFile(DATA / "ipl-matches.zip") as archive:
+    with zipfile.ZipFile(DATA / (prefix + "-matches.zip")) as archive:
         for path in sorted(archive.namelist()):
             if not path.endswith(".json"):
                 continue
@@ -83,11 +85,11 @@ def main():
         return sorted(({"id": pid, "name": names.get(pid, pid), **v} for pid,v in items.items()),
                       key=lambda p: (-p["runs"], p["name"]))
     output = {"source": "Cricsheet", "license": "ODC-BY 1.0",
-              "note": "Derived from available IPL ball-by-ball matches; season and career aggregates exclude Super Overs.",
+              "note": "Derived from available Cricsheet ball-by-ball matches; not complete official historical records. Super Overs excluded.",
               "players": formatted(all_players),
               "seasons": {season: formatted(items) for season, items in sorted(by_season.items(), reverse=True)},
               "matches": sorted(matches, key=lambda m: (m["date"], m["id"]), reverse=True)}
-    (DATA / "ipl-records.json").write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":")) + "\n")
+    (DATA / (prefix + "-records.json")).write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":")) + "\n")
     print(f"Saved {len(matches)} matches, {len(all_players)} player profiles and {len(by_season)} seasons")
 
 if __name__ == "__main__":
