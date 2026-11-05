@@ -199,3 +199,6 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 .header{padding-top:24px;padding-bottom:13px}
 .publication-grid{padding-top:12px}
 @media(max-width:650px){.header{padding-top:18px;padding-bottom:11px}.publication-grid{padding-top:10px}}
+
+.shell-home { padding-top: 1px; background-color: transparent; }
+.shell-detail { padding-top: 1px; }
