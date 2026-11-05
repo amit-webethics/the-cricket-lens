@@ -152,3 +152,10 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 @media(max-width:950px){.article-page .article-content-layout,.news-detail-page .article-content-layout{grid-template-columns:minmax(0,1fr) 260px;gap:18px}}
 @media(max-width:800px){.article-page{padding:20px 14px 28px}.article-page .article-content-layout,.news-detail-page .article-content-layout{display:block;margin-top:20px}.article-page .detail-right-sidebar{margin-top:24px}}
 @media(max-width:650px){.article-page{padding-top:18px}.article-page .back-link{margin-bottom:16px}}
+
+/* Header spacing: 13px above and below the main branding, before navigation */
+.header{padding-top:13px;padding-bottom:13px}
+/* Restore the previous detail-page spacing below navigation */
+.article-page{padding-top:16px}
+@media(max-width:800px){.article-page{padding-top:16px}}
+@media(max-width:650px){.article-page{padding-top:10px}}
