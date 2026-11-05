@@ -11,7 +11,7 @@ NON_BOWLER = {"run out", "retired hurt", "retired out", "obstructing the field"}
 
 def player():
     return {"runs": 0, "balls": 0, "fours": 0, "sixes": 0, "wickets": 0,
-            "conceded": 0, "legalBalls": 0, "dismissals": 0, "matches": 0}
+            "conceded": 0, "legalBalls": 0, "dismissals": 0, "matches": 0, "innings": 0, "bowlingInnings": 0, "highest": 0, "hundreds": 0, "fifties": 0, "nineties": 0, "fiveWickets": 0, "bestWickets": 0, "bestRuns": 0}
 
 def main():
     by_season = collections.defaultdict(lambda: collections.defaultdict(player))
@@ -38,11 +38,14 @@ def main():
             for innings in match.get("innings", []):
                 if innings.get("super_over"):
                     continue
+                innings_bat = collections.defaultdict(int)
+                innings_bowl = collections.defaultdict(lambda: {"wickets": 0, "runs": 0})
                 for over in innings.get("overs", []):
                     for delivery in over.get("deliveries", []):
                         batter = registry.get(delivery["batter"], delivery["batter"])
                         bowler = registry.get(delivery["bowler"], delivery["bowler"])
                         runs = int(delivery["runs"]["batter"])
+                        innings_bat[batter] += runs
                         extras = delivery.get("extras", {})
                         for target in (by_season[season][batter], all_players[batter]):
                             target["runs"] += runs
@@ -50,6 +53,7 @@ def main():
                             if not delivery.get("non_boundary"):
                                 target["fours"] += int(runs == 4)
                                 target["sixes"] += int(runs == 6)
+                        innings_bowl[bowler]["runs"] += runs + int(extras.get("wides", 0)) + int(extras.get("noballs", 0))
                         for target in (by_season[season][bowler], all_players[bowler]):
                             target["conceded"] += runs + int(extras.get("wides", 0)) + int(extras.get("noballs", 0))
                             target["legalBalls"] += int("wides" not in extras and "noballs" not in extras)
@@ -58,8 +62,23 @@ def main():
                             for target in (by_season[season][dismissed], all_players[dismissed]):
                                 target["dismissals"] += 1
                             if wicket.get("kind") not in NON_BOWLER:
+                                innings_bowl[bowler]["wickets"] += 1
                                 for target in (by_season[season][bowler], all_players[bowler]):
                                     target["wickets"] += 1
+                for pid, score in innings_bat.items():
+                    for target in (by_season[season][pid], all_players[pid]):
+                        target["innings"] += 1
+                        target["highest"] = max(target["highest"], score)
+                        target["hundreds"] += int(score >= 100)
+                        target["fifties"] += int(50 <= score < 100)
+                        target["nineties"] += int(90 <= score < 100)
+                for pid, figures in innings_bowl.items():
+                    for target in (by_season[season][pid], all_players[pid]):
+                        target["bowlingInnings"] += 1
+                        target["fiveWickets"] += int(figures["wickets"] >= 5)
+                        if figures["wickets"] > target["bestWickets"] or (figures["wickets"] == target["bestWickets"] and figures["runs"] < target["bestRuns"]):
+                            target["bestWickets"] = figures["wickets"]
+                            target["bestRuns"] = figures["runs"]
     def formatted(items):
         return sorted(({"id": pid, "name": names.get(pid, pid), **v} for pid,v in items.items()),
                       key=lambda p: (-p["runs"], p["name"]))
