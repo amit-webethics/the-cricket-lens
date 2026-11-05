@@ -1,0 +1,603 @@
+{
+  "source": "Cricsheet",
+  "sourceUrl": "https://cricsheet.org/",
+  "license": "ODC-BY 1.0",
+  "coverage": {
+    "matches": 1243,
+    "firstDate": "2008-04-18",
+    "lastDate": "2026-05-31"
+  },
+  "batting": [
+    {
+      "id": "ba607b88",
+      "runs": 9336,
+      "balls": 6926,
+      "fours": 845,
+      "sixes": 317,
+      "name": "V Kohli"
+    },
+    {
+      "id": "740742ef",
+      "runs": 7329,
+      "balls": 5514,
+      "fours": 661,
+      "sixes": 324,
+      "name": "RG Sharma"
+    },
+    {
+      "id": "0a476045",
+      "runs": 6769,
+      "balls": 5324,
+      "fours": 768,
+      "sixes": 153,
+      "name": "S Dhawan"
+    },
+    {
+      "id": "dcce6f09",
+      "runs": 6565,
+      "balls": 4697,
+      "fours": 663,
+      "sixes": 236,
+      "name": "DA Warner"
+    },
+    {
+      "id": "b17e2f24",
+      "runs": 5815,
+      "balls": 4179,
+      "fours": 508,
+      "sixes": 239,
+      "name": "KL Rahul"
+    },
+    {
+      "id": "1dc12ab9",
+      "runs": 5528,
+      "balls": 4043,
+      "fours": 506,
+      "sixes": 203,
+      "name": "SK Raina"
+    },
+    {
+      "id": "4a8a2e3b",
+      "runs": 5439,
+      "balls": 3957,
+      "fours": 375,
+      "sixes": 264,
+      "name": "MS Dhoni"
+    },
+    {
+      "id": "29e95537",
+      "runs": 5367,
+      "balls": 4273,
+      "fours": 540,
+      "sixes": 141,
+      "name": "AM Rahane"
+    },
+    {
+      "id": "a4cc73aa",
+      "runs": 5181,
+      "balls": 3671,
+      "fours": 432,
+      "sixes": 243,
+      "name": "SV Samson"
+    },
+    {
+      "id": "c4487b84",
+      "runs": 5162,
+      "balls": 3403,
+      "fours": 413,
+      "sixes": 251,
+      "name": "AB de Villiers"
+    },
+    {
+      "id": "db584dad",
+      "runs": 4965,
+      "balls": 3333,
+      "fours": 405,
+      "sixes": 357,
+      "name": "CH Gayle"
+    },
+    {
+      "id": "1c17e270",
+      "runs": 4952,
+      "balls": 3799,
+      "fours": 481,
+      "sixes": 182,
+      "name": "RV Uthappa"
+    },
+    {
+      "id": "c03f1114",
+      "runs": 4842,
+      "balls": 3577,
+      "fours": 466,
+      "sixes": 161,
+      "name": "KD Karthik"
+    },
+    {
+      "id": "3355b542",
+      "runs": 4773,
+      "balls": 3515,
+      "fours": 440,
+      "sixes": 174,
+      "name": "F du Plessis"
+    },
+    {
+      "id": "99b75528",
+      "runs": 4646,
+      "balls": 3103,
+      "fours": 459,
+      "sixes": 211,
+      "name": "JC Buttler"
+    },
+    {
+      "id": "b4b99816",
+      "runs": 4598,
+      "balls": 3236,
+      "fours": 446,
+      "sixes": 152,
+      "name": "Shubman Gill"
+    },
+    {
+      "id": "271f83cd",
+      "runs": 4581,
+      "balls": 3083,
+      "fours": 482,
+      "sixes": 178,
+      "name": "SA Yadav"
+    },
+    {
+      "id": "70d205c9",
+      "runs": 4348,
+      "balls": 3409,
+      "fours": 359,
+      "sixes": 173,
+      "name": "AT Rayudu"
+    },
+    {
+      "id": "85ec8e33",
+      "runs": 4229,
+      "balls": 3093,
+      "fours": 353,
+      "sixes": 182,
+      "name": "SS Iyer"
+    },
+    {
+      "id": "bb345e0b",
+      "runs": 4217,
+      "balls": 3404,
+      "fours": 492,
+      "sixes": 59,
+      "name": "G Gambhir"
+    },
+    {
+      "id": "93b4fc78",
+      "runs": 4012,
+      "balls": 3293,
+      "fours": 348,
+      "sixes": 117,
+      "name": "MK Pandey"
+    },
+    {
+      "id": "4329fbb5",
+      "runs": 3874,
+      "balls": 2809,
+      "fours": 376,
+      "sixes": 190,
+      "name": "SR Watson"
+    },
+    {
+      "id": "919a3be2",
+      "runs": 3865,
+      "balls": 2633,
+      "fours": 350,
+      "sixes": 181,
+      "name": "RR Pant"
+    },
+    {
+      "id": "752f7486",
+      "runs": 3600,
+      "balls": 2508,
+      "fours": 348,
+      "sixes": 166,
+      "name": "Ishan Kishan"
+    },
+    {
+      "id": "fe93fd9d",
+      "runs": 3526,
+      "balls": 2699,
+      "fours": 264,
+      "sixes": 122,
+      "name": "RA Jadeja"
+    }
+  ],
+  "bowling": [
+    {
+      "id": "57ee1fde",
+      "wickets": 233,
+      "runs": 5417,
+      "balls": 4037,
+      "name": "YS Chahal"
+    },
+    {
+      "id": "2e81a32d",
+      "wickets": 226,
+      "runs": 5913,
+      "balls": 4600,
+      "name": "B Kumar"
+    },
+    {
+      "id": "9d430b40",
+      "wickets": 207,
+      "runs": 5261,
+      "balls": 4651,
+      "name": "SP Narine"
+    },
+    {
+      "id": "98ae73b1",
+      "wickets": 192,
+      "runs": 5108,
+      "balls": 3850,
+      "name": "PP Chawla"
+    },
+    {
+      "id": "462411b3",
+      "wickets": 187,
+      "runs": 4441,
+      "balls": 3631,
+      "name": "JJ Bumrah"
+    },
+    {
+      "id": "495d42a5",
+      "wickets": 187,
+      "runs": 5652,
+      "balls": 4710,
+      "name": "R Ashwin"
+    },
+    {
+      "id": "87e562a9",
+      "wickets": 183,
+      "runs": 4360,
+      "balls": 3120,
+      "name": "DJ Bravo"
+    },
+    {
+      "id": "fe93fd9d",
+      "wickets": 180,
+      "runs": 5465,
+      "balls": 4254,
+      "name": "RA Jadeja"
+    },
+    {
+      "id": "5f547c8b",
+      "wickets": 179,
+      "runs": 4282,
+      "balls": 3530,
+      "name": "Rashid Khan"
+    },
+    {
+      "id": "6b19d823",
+      "wickets": 174,
+      "runs": 4145,
+      "balls": 3371,
+      "name": "A Mishra"
+    },
+    {
+      "id": "a12e1d51",
+      "wickets": 170,
+      "runs": 3366,
+      "balls": 2827,
+      "name": "SL Malinga"
+    },
+    {
+      "id": "f986ca1a",
+      "wickets": 151,
+      "runs": 3727,
+      "balls": 2506,
+      "name": "HV Patel"
+    },
+    {
+      "id": "ce820073",
+      "wickets": 151,
+      "runs": 4294,
+      "balls": 3159,
+      "name": "Sandeep Sharma"
+    },
+    {
+      "id": "8b5b6769",
+      "wickets": 150,
+      "runs": 4030,
+      "balls": 3416,
+      "name": "Harbhajan Singh"
+    },
+    {
+      "id": "e62dd25d",
+      "wickets": 148,
+      "runs": 3358,
+      "balls": 2290,
+      "name": "K Rabada"
+    },
+    {
+      "id": "8cf9814c",
+      "wickets": 145,
+      "runs": 4208,
+      "balls": 2912,
+      "name": "Mohammed Shami"
+    },
+    {
+      "id": "a818c1be",
+      "wickets": 145,
+      "runs": 3935,
+      "balls": 2780,
+      "name": "TA Boult"
+    },
+    {
+      "id": "cc1e8c68",
+      "wickets": 144,
+      "runs": 4317,
+      "balls": 3050,
+      "name": "UT Yadav"
+    },
+    {
+      "id": "2e171977",
+      "wickets": 139,
+      "runs": 4431,
+      "balls": 3579,
+      "name": "AR Patel"
+    },
+    {
+      "id": "759ac88f",
+      "wickets": 134,
+      "runs": 3513,
+      "balls": 2403,
+      "name": "MM Sharma"
+    },
+    {
+      "id": "2f49c897",
+      "wickets": 128,
+      "runs": 3911,
+      "balls": 2672,
+      "name": "Mohammed Siraj"
+    },
+    {
+      "id": "bbd41817",
+      "wickets": 123,
+      "runs": 2863,
+      "balls": 1806,
+      "name": "AD Russell"
+    },
+    {
+      "id": "1abb78f8",
+      "wickets": 119,
+      "runs": 3514,
+      "balls": 2202,
+      "name": "SN Thakur"
+    },
+    {
+      "id": "1e66c162",
+      "wickets": 114,
+      "runs": 3504,
+      "balls": 2351,
+      "name": "JD Unadkat"
+    },
+    {
+      "id": "8d2c70ad",
+      "wickets": 112,
+      "runs": 3159,
+      "balls": 2286,
+      "name": "Kuldeep Yadav"
+    }
+  ],
+  "seasons": [
+    {
+      "year": 2026,
+      "matches": 74,
+      "runs": 27450,
+      "wickets": 880
+    },
+    {
+      "year": 2025,
+      "matches": 74,
+      "runs": 26503,
+      "wickets": 871
+    },
+    {
+      "year": 2024,
+      "matches": 71,
+      "runs": 25971,
+      "wickets": 883
+    },
+    {
+      "year": 2023,
+      "matches": 74,
+      "runs": 25688,
+      "wickets": 916
+    },
+    {
+      "year": 2022,
+      "matches": 74,
+      "runs": 24395,
+      "wickets": 912
+    },
+    {
+      "year": 2021,
+      "matches": 60,
+      "runs": 18622,
+      "wickets": 717
+    },
+    {
+      "year": 2020,
+      "matches": 60,
+      "runs": 19352,
+      "wickets": 668
+    },
+    {
+      "year": 2019,
+      "matches": 60,
+      "runs": 19400,
+      "wickets": 681
+    },
+    {
+      "year": 2018,
+      "matches": 60,
+      "runs": 19901,
+      "wickets": 722
+    },
+    {
+      "year": 2017,
+      "matches": 59,
+      "runs": 18769,
+      "wickets": 709
+    },
+    {
+      "year": 2016,
+      "matches": 60,
+      "runs": 18862,
+      "wickets": 666
+    },
+    {
+      "year": 2015,
+      "matches": 59,
+      "runs": 18332,
+      "wickets": 687
+    },
+    {
+      "year": 2014,
+      "matches": 60,
+      "runs": 18909,
+      "wickets": 672
+    },
+    {
+      "year": 2013,
+      "matches": 76,
+      "runs": 22541,
+      "wickets": 910
+    },
+    {
+      "year": 2012,
+      "matches": 74,
+      "runs": 22453,
+      "wickets": 858
+    },
+    {
+      "year": 2011,
+      "matches": 73,
+      "runs": 21154,
+      "wickets": 813
+    },
+    {
+      "year": 2010,
+      "matches": 60,
+      "runs": 18864,
+      "wickets": 722
+    },
+    {
+      "year": 2009,
+      "matches": 57,
+      "runs": 16320,
+      "wickets": 697
+    },
+    {
+      "year": 2008,
+      "matches": 58,
+      "runs": 17937,
+      "wickets": 690
+    }
+  ],
+  "teams": [
+    {
+      "name": "Mumbai Indians",
+      "matches": 291,
+      "wins": 155
+    },
+    {
+      "name": "Chennai Super Kings",
+      "matches": 266,
+      "wins": 148
+    },
+    {
+      "name": "Kolkata Knight Riders",
+      "matches": 278,
+      "wins": 140
+    },
+    {
+      "name": "Rajasthan Royals",
+      "matches": 251,
+      "wins": 123
+    },
+    {
+      "name": "Royal Challengers Bangalore",
+      "matches": 240,
+      "wins": 114
+    },
+    {
+      "name": "Sunrisers Hyderabad",
+      "matches": 211,
+      "wins": 102
+    },
+    {
+      "name": "Kings XI Punjab",
+      "matches": 190,
+      "wins": 85
+    },
+    {
+      "name": "Delhi Daredevils",
+      "matches": 161,
+      "wins": 67
+    },
+    {
+      "name": "Delhi Capitals",
+      "matches": 120,
+      "wins": 58
+    },
+    {
+      "name": "Gujarat Titans",
+      "matches": 77,
+      "wins": 47
+    },
+    {
+      "name": "Punjab Kings",
+      "matches": 88,
+      "wins": 41
+    },
+    {
+      "name": "Lucknow Super Giants",
+      "matches": 72,
+      "wins": 34
+    },
+    {
+      "name": "Royal Challengers Bengaluru",
+      "matches": 46,
+      "wins": 29
+    },
+    {
+      "name": "Deccan Chargers",
+      "matches": 75,
+      "wins": 29
+    },
+    {
+      "name": "Gujarat Lions",
+      "matches": 30,
+      "wins": 13
+    },
+    {
+      "name": "Pune Warriors",
+      "matches": 46,
+      "wins": 12
+    },
+    {
+      "name": "Rising Pune Supergiant",
+      "matches": 16,
+      "wins": 10
+    },
+    {
+      "name": "Kochi Tuskers Kerala",
+      "matches": 14,
+      "wins": 6
+    },
+    {
+      "name": "Rising Pune Supergiants",
+      "matches": 14,
+      "wins": 5
+    }
+  ],
+  "note": "Derived from available Cricsheet ball-by-ball matches; coverage may be incomplete. Super-over deliveries excluded from player aggregates."
+}
