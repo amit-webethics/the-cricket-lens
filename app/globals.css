@@ -296,17 +296,17 @@ body[data-theme="dark"] .ipl-record-table td a{color:#c1bfff}
 
 .ipl-record-explorer{display:grid;grid-template-columns:245px minmax(0,1fr);gap:22px;align-items:start}
 .ipl-record-menu{border:1px solid #e0e6e8;padding:7px;background:#fff}
-.ipl-record-menu h3{margin:0;padding:11px 10px;font-size:14px;background:#e6f4ef;color:#53666a}
+.ipl-record-menu h3{margin:0;padding:11px 10px;font-size:14px;background:#efeffb;color:#33319c}
 .ipl-record-menu button{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;border:0;border-bottom:1px solid #e8e9eb;padding:10px 9px;background:transparent;color:#202a32;cursor:pointer;font-size:13px}
 .ipl-record-menu button span{font-size:21px;line-height:12px}
-.ipl-record-menu button:hover{background:#edf6f3}
-.ipl-record-menu button.active{background:#008e79;color:white;font-weight:700}
+.ipl-record-menu button:hover{background:#efeffb}
+.ipl-record-menu button.active{background:#33319c;color:white;font-weight:700}
 .ipl-record-results{min-width:0}
 .ipl-record-table td:last-child{background:rgba(51,49,156,.05)}
 body[data-theme="dark"] .ipl-record-menu{background:#202538;border-color:#42495c}
-body[data-theme="dark"] .ipl-record-menu h3{background:#2c4144;color:#d4e8e4}
+body[data-theme="dark"] .ipl-record-menu h3{background:#30305c;color:#e7e6ff}
 body[data-theme="dark"] .ipl-record-menu button{color:#e8e9f2;border-color:#42495c}
-body[data-theme="dark"] .ipl-record-menu button.active{background:#008e79;color:white}
+body[data-theme="dark"] .ipl-record-menu button.active{background:#33319c;color:white}
 body[data-theme="dark"] .ipl-record-menu button:hover:not(.active){background:#353e53}
 @media(max-width:800px){.ipl-record-explorer{grid-template-columns:1fr}.ipl-record-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}.ipl-record-menu h3{grid-column:1/-1}.ipl-record-menu button{font-size:12px}}
 @media(max-width:430px){.ipl-record-menu{grid-template-columns:1fr}}
