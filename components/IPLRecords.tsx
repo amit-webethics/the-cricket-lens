@@ -12,7 +12,7 @@ const fmt=(n:number)=>n.toLocaleString('en-IN');
 function value(p:Player,m:Metric):number{switch(m){case 'average':return p.dismissals?p.runs/p.dismissals:p.runs?Infinity:0;case 'strikeRate':return p.balls?p.runs*100/p.balls:0;case 'bowlingAverage':return p.wickets?p.conceded/p.wickets:Infinity;case 'economy':return p.legalBalls?p.conceded*6/p.legalBalls:Infinity;case 'bowlingStrikeRate':return p.wickets?p.legalBalls/p.wickets:Infinity;case 'bestBowling':return (p.bestWickets||0)*10000-(p.bestRuns||0);default:return Number(p[m]||0)}}
 const lower:Metric[]=['bowlingAverage','economy','bowlingStrikeRate'];
 function shown(p:Player,m:Metric){if(m==='bestBowling')return (p.bestWickets||0)+'/'+(p.bestRuns||0);const v=value(p,m);return !Number.isFinite(v)?'—':['average','strikeRate','bowlingAverage','economy','bowlingStrikeRate'].includes(m)?v.toFixed(2):fmt(v)}
-export default function IPLRecords({records}:{records:Records}){
+export default function IPLRecords({records,basePath="/ipl"}:{records:Records;basePath?:string}){
  const [season,setSeason]=useState('all');
  const [metric,setMetric]=useState<Metric>('runs');
  const [search,setSearch]=useState('');
@@ -48,7 +48,7 @@ export default function IPLRecords({records}:{records:Records}){
           {sorted.slice(0, limit).map((p, i) => (
             <tr key={p.id}>
               <td>{i + 1}</td>
-              <td><Link href={`/ipl/players/${encodeURIComponent(p.id)}/`}>{p.name}</Link></td>
+              <td><Link href={`${basePath}/players/${encodeURIComponent(p.id)}/`}>{p.name}</Link></td>
               <td>{p.matches}</td>
               <td>{isBatting ? (p.innings || '—') : (p.bowlingInnings || '—')}</td>
               {isBatting ? (
@@ -78,6 +78,6 @@ export default function IPLRecords({records}:{records:Records}){
     <p className="ipl-stats-intro">Qualification for rate records: {season === 'all' ? 'minimum 10 batting innings / 200 balls for batting strike rate, 20 wickets for bowling averages, or 120 legal balls for economy' : 'minimum 3 batting innings / 50 balls for batting strike rate, 5 wickets for bowling averages, or 30 legal balls for economy'}. These are editorial thresholds, not official IPL eligibility rules.</p>
   </div>
   </div>
- <div className="ipl-section-heading" style={{marginTop:32}}><h2>Historical Matches</h2><span>{matches.length} matches</span></div><div className="ipl-match-list">{matches.slice(0,20).map(m=><Link href={`/ipl/matches/${m.id}/`} key={m.id}><span>{m.date}</span><strong>{m.teams.join(' vs ')}</strong><small>{m.outcome?.winner?m.outcome.winner+' won':m.outcome?.result||'Match details'} · {m.venue}</small></Link>)}</div>{matches.length>20&&<p className="ipl-stats-intro">Showing the 20 most recent matches for the selected season.</p>}
+ <div className="ipl-section-heading" style={{marginTop:32}}><h2>Historical Matches</h2><span>{matches.length} matches</span></div><div className="ipl-match-list">{matches.slice(0,20).map(m=><Link href={`${basePath}/matches/${m.id}/`} key={m.id}><span>{m.date}</span><strong>{m.teams.join(' vs ')}</strong><small>{m.outcome?.winner?m.outcome.winner+' won':m.outcome?.result||'Match details'} · {m.venue}</small></Link>)}</div>{matches.length>20&&<p className="ipl-stats-intro">Showing the 20 most recent matches for the selected season.</p>}
  </div>;
 }
