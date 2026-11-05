@@ -202,3 +202,7 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 
 .shell-home { padding-top: 1px; background-color: transparent; }
 .shell-detail { padding-top: 1px; }
+
+/* Detail-page-only shell and footer spacing */
+.shell.shell-detail { width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto; padding-top: 0; padding-left: 0; padding-right: 0; }
+.shell.shell-detail footer { border-top: 1px solid var(--navy); padding-top: 33px; padding-right: 33px; padding-left: 33px; }
