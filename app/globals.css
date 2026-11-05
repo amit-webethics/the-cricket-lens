@@ -310,3 +310,14 @@ body[data-theme="dark"] .ipl-record-menu button.active{background:#33319c;color:
 body[data-theme="dark"] .ipl-record-menu button:hover:not(.active){background:#353e53}
 @media(max-width:800px){.ipl-record-explorer{grid-template-columns:1fr}.ipl-record-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}.ipl-record-menu h3{grid-column:1/-1}.ipl-record-menu button{font-size:12px}}
 @media(max-width:430px){.ipl-record-menu{grid-template-columns:1fr}}
+
+
+/* International cricket format cards, consistent with The Cricket Lens palette */
+.intl-format-card{display:flex;flex-direction:column;gap:9px;border:1px solid #dedff0;background:#f7f7fd;padding:20px;min-height:160px;text-decoration:none}
+.intl-format-card h3{font-size:21px;color:#33319c;margin:0}
+.intl-format-card p{font-size:13px;line-height:1.6;color:#60677b;margin:0;flex:1}
+.intl-format-card span{font-size:12px;font-weight:700;color:#33319c}
+.intl-format-card:hover{border-color:#33319c}
+body[data-theme="dark"] .intl-format-card{background:#262b40;border-color:#424861}
+body[data-theme="dark"] .intl-format-card h3,body[data-theme="dark"] .intl-format-card span{color:#bdbbff}
+body[data-theme="dark"] .intl-format-card p{color:#c5c9dc}
