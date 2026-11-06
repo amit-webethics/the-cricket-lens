@@ -1,3 +1,4 @@
+import {storyMetadata,storyJsonLd} from '../../../lib/seo';
 import DetailRecentSidebar from '../../../components/DetailRecentSidebar';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
@@ -8,17 +9,14 @@ import Art from '../../../components/Art';
 import {publicContent} from '../../../lib/cms/public';
 
 export function generateStaticParams(){return articles.map(a=>({slug:a.slug}))}
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
-  const {slug}=await params; const {articles:published}=await publicContent(); const a=published.find(a=>a.slug===slug);
-  return {title:a?.seoTitle||a?.title||'Story not found',description:a?.seoDescription||a?.description,openGraph:{title:a?.seoTitle||a?.title,description:a?.seoDescription||a?.description,images:a?.socialImage?[a.socialImage]:a?.imageUrl?[a.imageUrl]:[]}};
-}
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const {slug}=await params;const {articles:published}=await publicContent();const item=published.find(a=>a.slug===slug);return item?storyMetadata(item,`/articles/${slug}/`,'article'):{title:'Story not found',robots:{index:false}};}
 export default async function Article({params}:{params:Promise<{slug:string}>}){
   const {slug}=await params; const {articles:published}=await publicContent(); const a=published.find(a=>a.slug===slug); if(!a)notFound();
   const date=a.publishedAt?new Date(a.publishedAt):null;
   const publishedDate=date?new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(date):'';
   const publishedTime=date?new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).format(date):'';
   const related=published.filter(x=>x.slug!==slug).slice(0,2);
-  return <main id="main" className="article-page">
+  return <main id="main" className="article-page"><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(storyJsonLd(a,`/articles/${slug}/`,'article')).replace(/</g,'\\u003c')}}/>
     <Link href="/#stories" className="back-link"><ArrowLeft size={16}/> Back to stories</Link>
     <header className="article-heading">
       <div className="eyebrow"><span>{a.series||a.category}</span>{a.label&&<span className="draft-pill">DRAFT FOR REVIEW</span>}</div>
