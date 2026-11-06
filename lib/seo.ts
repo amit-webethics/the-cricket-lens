@@ -5,10 +5,12 @@ export function seoKeywords(item:{seoKeywords?:string|string[];tags?:string[];ca
 export function storyMetadata(item:any,path:string,kind:'article'|'news'):Metadata{
  const title=item?.seoTitle?.trim()||item?.title||'Cricket story';
  const description=(item?.seoDescription?.trim()||item?.description||item?.summary||'Cricket news and analysis from The Cricket Lens').replace(/<[^>]*>/g,' ').slice(0,180);
+ const ogTitle=item?.ogTitle?.trim()||title;
+ const ogDescription=item?.ogDescription?.trim()||description;
  const image=item?.socialImage||item?.imageUrl;
  const url=absoluteUrl(path);
  const images=image?[{url:image.startsWith('/')?absoluteUrl(image):image,alt:item?.imageAlt||title}]:[];
- return {title,description,keywords:seoKeywords(item),alternates:{canonical:url},openGraph:{type:'article',url,siteName:'The Cricket Lens',title,description,images,publishedTime:item?.publishedAt||undefined,modifiedTime:item?.updatedAt||undefined,authors:[item?.author||'The Cricket Lens']},twitter:{card:images.length?'summary_large_image':'summary',title,description,images:images.map(x=>x.url)},robots:item?.label?{index:false,follow:false}:undefined};
+ return {title,description,keywords:seoKeywords(item),alternates:{canonical:url},openGraph:{type:'article',url,siteName:'The Cricket Lens',title:ogTitle,description:ogDescription,images,publishedTime:item?.publishedAt||undefined,modifiedTime:item?.updatedAt||undefined,authors:[item?.author||'The Cricket Lens']},twitter:{card:images.length?'summary_large_image':'summary',title:ogTitle,description:ogDescription,images:images.map(x=>x.url)},robots:item?.label?{index:false,follow:false}:undefined};
 }
 export function storyJsonLd(item:any,path:string,kind:'article'|'news'){
  const image=item?.socialImage||item?.imageUrl;
