@@ -321,3 +321,18 @@ body[data-theme="dark"] .ipl-record-menu button:hover:not(.active){background:#3
 body[data-theme="dark"] .intl-format-card{background:#262b40;border-color:#424861}
 body[data-theme="dark"] .intl-format-card h3,body[data-theme="dark"] .intl-format-card span{color:#bdbbff}
 body[data-theme="dark"] .intl-format-card p{color:#c5c9dc}
+
+
+/* Public information pages: match article-detail typography without the right sidebar. */
+.info-page{font-family:Inter,Arial,sans-serif;width:100%;max-width:1050px;margin:0 auto;padding:16px 24px 48px;min-height:55vh}
+.info-page .back-link{display:inline-flex;align-items:center;margin:0 0 18px;padding:0;font-size:12px;font-weight:600;color:#33319c}
+.info-page>.eyebrow{margin:0 0 12px;color:#33319c;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:none}
+.info-page h1{font-family:Inter,Arial,sans-serif;font-size:26px;font-weight:600;line-height:1.22;letter-spacing:-.025em;color:#20243b;margin:10px 0 12px}
+.info-page>.standfirst{font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.55;color:#606879;margin:0 0 28px;max-width:780px}
+.info-page section{max-width:760px;margin:0 0 24px}
+.info-page section h2{font-family:Inter,Arial,sans-serif;font-size:20px;font-weight:600;line-height:1.35;letter-spacing:-.02em;color:#23263e;margin:0 0 10px}
+.info-page section p{font-family:Inter,Arial,sans-serif;font-size:14px;line-height:1.7;color:#414858;margin:0 0 11px}
+.info-page>.text-button,.info-page .info-page-contact .text-button{font-size:13px;color:#33319c}
+.info-page .info-page-contact{font-size:14px;max-width:760px;margin:8px 0 24px}
+@media(max-width:800px){.info-page{padding:16px 14px 36px}}
+@media(max-width:650px){.info-page{padding-top:10px}.info-page h1{font-size:26px}.info-page section h2{font-size:20px}.info-page section p{font-size:14px}}
