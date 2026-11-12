@@ -67,8 +67,8 @@ export function createCollectedStore(sql:ReturnType<typeof database>){
    if(!row)throw new Error('Collected story not found');
    if(row.entry_id)return {id:row.entry_id,kind:row.entry_kind};
    const d=row.data;const store=createContentStore(tx as unknown as ReturnType<typeof database>,true);
-   const common={title:d.title,slug:`${slugify(d.title).slice(0,140)||'cricket'}-${id.slice(0,12)}`,status:'draft',verified:false};
-   const value=choice.kind==='news'?{...common,summary:d.summary.slice(0,1200)||d.title,sourceLabel:[...new Set(members.map(r=>r.data.source))].join(' / ').slice(0,160),sourceUrl:d.url,sources:members.slice(0,30).map(r=>({label:r.data.source,url:r.data.url})),team:''}:{...common,description:d.summary.slice(0,500)||d.title,categoryId:choice.categoryId,authorId:choice.authorId,minutes:1,sections:[{heading:'Story',body:[d.summary||d.title]}],sources:members.slice(0,30).map(r=>({label:r.data.source,url:r.data.url})),tags:[],series:'',featured:false,imageRightsConfirmed:false};
+   const common={title:d.title,slug:`${slugify(d.title).slice(0,140)||'cricket'}-${id.slice(0,12)}`,status:'draft',verified:false,tags:[...new Set(String(d.tags||'').split(/[,;|]/).map((tag:string)=>tag.trim()).filter((tag:string)=>tag.length>=2&&tag.length<=50))].slice(0,20)};
+   const value=choice.kind==='news'?{...common,summary:d.summary.slice(0,1200)||d.title,sourceLabel:[...new Set(members.map(r=>r.data.source))].join(' / ').slice(0,160),sourceUrl:d.url,sources:members.slice(0,30).map(r=>({label:r.data.source,url:r.data.url})),team:''}:{...common,description:d.summary.slice(0,500)||d.title,categoryId:choice.categoryId,authorId:choice.authorId,minutes:1,sections:[{heading:'Story',body:[d.summary||d.title]}],sources:members.slice(0,30).map(r=>({label:r.data.source,url:r.data.url})),series:'',featured:false,imageRightsConfirmed:false};
    const entry=await store.saveEntry(choice.kind,value);
    await tx`UPDATE cms_collected SET state='drafted',entry_id=${entry.id},entry_kind=${choice.kind} WHERE COALESCE(group_id,id)=${id} OR id=${id}`;
    return {id:entry.id,kind:entry.kind};
