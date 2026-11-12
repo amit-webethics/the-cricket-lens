@@ -11,6 +11,7 @@ async function saveEntry(kind:Kind,input:unknown,id?:string,revision?:number){co
  // One transaction protects related-record checks and optimistic edit revisions.
  if(kind==='articles'||kind==='news'){for(const [field,relatedKind] of [['categoryId','categories'],['authorId','authors']] as const){if(kind==='news'&&!data[field])continue;const found=await tx`SELECT id FROM cms_records WHERE kind=${relatedKind} AND id=${data[field]} AND status='published' FOR SHARE`;if(!found.length)throw new Error('Choose an active category and author');}}
  if(['categories','authors'].includes(kind)&&id&&data.status!=='published'){await tx`SELECT id FROM cms_records WHERE id=${id} AND kind=${kind} FOR UPDATE`;const key=kind==='categories'?'categoryId':'authorId';const used=await tx`SELECT id FROM cms_records WHERE kind IN ('articles','news') AND data->>${key}=${id} AND status!='archived'`;if(used.length)throw new Error('This entry is used by articles or news. Reassign or archive those articles first.');}
+ if((kind==='articles'||kind==='news')&&data.status==='scheduled'&&(!data.scheduledAt||Date.parse(data.scheduledAt)<=Date.now()))throw new Error('Choose a future scheduled time');
  if(kind==='settings'&&data.slug!=='site')throw new Error('The settings slug must be site');
  if(kind==='pages'&&!['about','contact','editorial','privacy','terms','corrections'].includes(data.slug))throw new Error('Choose a supported page');
  const json=tx.json(data);
@@ -19,5 +20,6 @@ async function saveEntry(kind:Kind,input:unknown,id?:string,revision?:number){co
  });}
 
 return {listEntries,saveEntry};}
+export async function publishDueEntries(){const sql=database();const rows=await sql`UPDATE cms_records SET status='published',data=jsonb_set(data,'{status}','\"published\"'::jsonb),revision=revision+1,updated_at=now(),published_at=now() WHERE kind IN ('articles','news') AND status='scheduled' AND (data->>'scheduledAt')::timestamptz <= now() RETURNING id,kind,slug,title`;return rows.map(r=>({id:r.id,kind:r.kind,slug:r.slug,title:r.title}));}
 export const listEntries=(kind:Kind,publicOnly=false)=>createContentStore(database()).listEntries(kind,publicOnly);
 export const saveEntry=(kind:Kind,input:unknown,id?:string,revision?:number)=>createContentStore(database()).saveEntry(kind,input,id,revision);
