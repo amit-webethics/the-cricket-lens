@@ -44,6 +44,14 @@ export function extractSource(html:string,url:string):SourceReference{
  }
  for(const script of document.querySelectorAll('script[type="application/ld+json"]')){try{walk(JSON.parse(script.textContent||''));}catch{}}
  const title=clean(jsonTitle||document.querySelector('meta[property="og:title"]')?.getAttribute('content')||document.querySelector('h1')?.textContent||document.title).slice(0,220);
+ const meta=(selector:string)=>clean(document.querySelector(selector)?.getAttribute('content')||'');
+ const category=meta('meta[property="article:section"]')||meta('meta[name="article:section"]');
+ const rawTags=[meta('meta[name="keywords"]'),...Array.from(document.querySelectorAll('meta[property="article:tag"]')).map(e=>clean(e.getAttribute('content')||''))];
+ const tags=[...new Set(rawTags.flatMap(v=>v.split(/[,;|]/)).map(v=>v.trim()).filter(v=>v.length>=2&&v.length<=50))].slice(0,20);
+ const imageCandidate=meta('meta[property="og:image"]')||meta('meta[name="twitter:image"]');
+ let imageUrl='';try{const candidate=new URL(imageCandidate,u);if(candidate.protocol==='https:'&&!candidate.username&&!candidate.password)imageUrl=candidate.toString().slice(0,1500);}catch{}
+ const imageAlt=meta('meta[property="og:image:alt"]').slice(0,250);
+ const imageCredit='';
  document.querySelectorAll('script,style,nav,footer,header,aside,form,iframe,noscript,button,[hidden],[aria-hidden="true"]').forEach(e=>e.remove());
  let content='';
  const exact=document.querySelector('[itemprop="articleBody"],.cb-nws-artcl-content,.cb-nws-dtl-itms');
@@ -65,7 +73,7 @@ export function extractSource(html:string,url:string):SourceReference{
  let budget=MAX_TEXT;let truncated=sections.length>50;
  const bounded=sections.slice(0,50).map(s=>({...s,body:s.body.slice(0,100).map(p=>{const text=p.slice(0,Math.max(0,Math.min(20000,budget)));if(text.length<p.length)truncated=true;budget-=text.length+2;return text;}).filter(Boolean)})).filter(s=>s.body.length);
  const text=bounded.map(s=>s.body.join('\n\n')).join('\n\n').slice(0,MAX_TEXT);
- return sourceReferenceSchema.parse({url:u.toString(),publisher:u.hostname.includes('cricbuzz')?'Cricbuzz':'ESPNcricinfo',title,fetchedAt:new Date().toISOString(),text,sections:bounded,warning:truncated?'This source exceeded the extraction limit. Open the original for the remaining text.':'Extraction may omit tables, embedded media or dynamically loaded content. Check the source for completeness.'});
+ return sourceReferenceSchema.parse({url:u.toString(),publisher:u.hostname.includes('cricbuzz')?'Cricbuzz':'ESPNcricinfo',title,fetchedAt:new Date().toISOString(),text,sections:bounded,category,tags,imageUrl,imageAlt,imageCredit,warning:truncated?'This source exceeded the extraction limit. Open the original for the remaining text.':'Extraction may omit tables, embedded media or dynamically loaded content. Check the source for completeness.'});
 }
 export async function fetchSourceContent(value:string,loader:(url:URL,signal:AbortSignal)=>Promise<PageResponse>=requestPage){
  let url=validateSourceUrl(value);const signal=AbortSignal.timeout(25000);
