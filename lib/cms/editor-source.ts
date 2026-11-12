@@ -7,7 +7,8 @@ export function fillEditorFromSource(kind:'articles'|'news',data:Record<string,a
  const tags=[...new Set([...(data.tags||[]),...(source.tags||[])])].slice(0,20);
  const suggestedImage=source.imageUrl||'';
  const imageSuggestion={sourceImageUrl:suggestedImage,sourceImageAlt:source.imageAlt||'',sourceImageCredit:source.imageCredit||''};
- const paragraphs=source.sections.flatMap(section=>section.body.map((body,i)=>({heading:(section.heading&&section.heading!=='Story'?section.heading+' — ':'')+'Paragraph '+(i+1),body:sourceParagraphs(body)}))).slice(0,50);
+ const allParagraphs=source.sections.flatMap(section=>section.body.map((body,i)=>({heading:(section.heading&&section.heading!=='Story'?section.heading+' — ':'')+'Paragraph '+(i+1),body:sourceParagraphs(body)})));
+ const paragraphs=allParagraphs.length<=50?allParagraphs:[...allParagraphs.slice(0,49),{heading:'Remaining source paragraphs',body:sourceParagraphs(allParagraphs.slice(49).flatMap(s=>s.body).join('\\n\\n'))}];
  if(kind==='news')return {...data,sourceContent,tags,...imageSuggestion,details:source.text,detailsFormat:'plain',newsSections:paragraphs.map(s=>({heading:s.heading,content:s.body.join('\\n\\n'),format:'plain'})),verified:false};
  return {...data,sourceContent,tags,...imageSuggestion,sections:paragraphs.length?paragraphs:[{heading:'Story',body:sourceParagraphs(source.text)}],verified:false};
 }
