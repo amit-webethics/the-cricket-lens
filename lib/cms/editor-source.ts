@@ -4,7 +4,10 @@ export function sourceParagraphs(text:string){const paragraphs:string[]=[];for(c
 export function fillEditorFromSource(kind:'articles'|'news',data:Record<string,any>,source:SourceReference):Record<string,any>{
  const sourceContent=[...(data.sourceContent||[]).filter((r:SourceReference)=>r.url!==source.url),source];
  if(sourceContent.length>5||sourceContent.reduce((n,r)=>n+r.text.length,0)>200000)throw new Error('Remove an older fetched source before adding more content.');
- if(kind==='news')return {...data,sourceContent,details:source.text,detailsFormat:'plain',newsSections:(source.sections.length?source.sections:[{heading:'Story',body:[source.text]}]).map(s=>({heading:s.heading||'Story',content:s.body.join('\n\n'),format:'plain'})),verified:false};
- const sections=(source.sections.length?source.sections:[{heading:'Story',body:[source.text]}]).map(s=>({heading:s.heading||'Story',body:sourceParagraphs(s.body.join('\n\n'))}));
- return {...data,sourceContent,sections,verified:false};
+ const tags=[...new Set([...(data.tags||[]),...(source.tags||[])])].slice(0,20);
+ const suggestedImage=source.imageUrl||'';
+ const imageSuggestion={sourceImageUrl:suggestedImage,sourceImageAlt:source.imageAlt||'',sourceImageCredit:source.imageCredit||''};
+ const paragraphs=source.sections.flatMap(section=>section.body.map((body,i)=>({heading:(section.heading&&section.heading!=='Story'?section.heading+' — ':'')+'Paragraph '+(i+1),body:sourceParagraphs(body)}))).slice(0,50);
+ if(kind==='news')return {...data,sourceContent,tags,...imageSuggestion,details:source.text,detailsFormat:'plain',newsSections:paragraphs.map(s=>({heading:s.heading,content:s.body.join('\\n\\n'),format:'plain'})),verified:false};
+ return {...data,sourceContent,tags,...imageSuggestion,sections:paragraphs.length?paragraphs:[{heading:'Story',body:sourceParagraphs(source.text)}],verified:false};
 }
