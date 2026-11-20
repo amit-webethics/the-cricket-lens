@@ -1,4 +1,5 @@
 import {test,before,after} from 'node:test';
+import {classifyStory,suggestDraftMetadata} from '../lib/cms/story-suggestions';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -34,3 +35,18 @@ test('PostgreSQL admin publishing lifecycle',async t=>{
 test('missing admin configuration fails closed even with a session token',async()=>{const saved=process.env.ADMIN_PASSWORD_HASH;try{delete process.env.ADMIN_PASSWORD_HASH;assert.equal(await validSession('a'.repeat(64),()=>{throw new Error('Database should not be queried')}),false);}finally{process.env.ADMIN_PASSWORD_HASH=saved;}});
 
 test('admin authorization requires a verified, allowlisted email',async()=>{const {authorizeUser}=await import('../lib/neon/authorization');const db=await PGlite.create();try{await db.exec("CREATE TABLE cms_admin_authorized (email text primary key, active boolean not null); INSERT INTO cms_admin_authorized VALUES ('admin@example.com',true),('disabled@example.com',false)");const connection=()=>adapter(db) as any;assert.equal(await authorizeUser({email:'ADMIN@example.com',emailVerified:true},connection),true);assert.equal(await authorizeUser({email:'admin@example.com',emailVerified:false},connection),false);assert.equal(await authorizeUser({email:'other@example.com',emailVerified:true},connection),false);assert.equal(await authorizeUser({email:'disabled@example.com',emailVerified:true},connection),false);assert.equal(await authorizeUser(null,connection),false);}finally{await db.close()}});
+
+test('imported story suggestions preserve uncertainty and fit draft field limits',()=>{
+ const preview=classifyStory({title:'India name their squad',sourceCategory:'Match Previews'});
+ assert.equal(preview.kind,'articles');
+ assert.equal(preview.category,'Match Previews');
+ assert.equal(classifyStory({title:'Devon Conway ruled out of ODI opener'}).kind,'news');
+ assert.equal(classifyStory({title:'A day at the ground',suggestedType:'News'}).kind,'review');
+ assert.equal(classifyStory({title:'A day at the ground',url:'https://example.com/features/story'}).kind,'articles');
+ assert.deepEqual(suggestDraftMetadata({title:'IPL and T20I update',tags:'India, india | Bowling'}).tags,['India','Bowling']);
+ const metadata=suggestDraftMetadata({title:'IPL and T20I update '.repeat(12),summary:'The upcoming fixtures have been confirmed. '.repeat(12)});
+ assert.deepEqual(metadata.tags,['IPL','T20I']);
+ assert.ok(metadata.seoTitle.length<=70);
+ assert.ok(metadata.seoDescription.length<=180);
+ assert.equal(suggestDraftMetadata({title:'A day at the ground'}).seoDescription,'A day at the ground');
+});
