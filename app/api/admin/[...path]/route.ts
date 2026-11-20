@@ -27,13 +27,20 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
   return json({error:message},e.message==='DRAFT_NEEDS_FACTS'?400:503);
  }
  }
+ if(path[0]==='series'&&path.length===1&&req.method==='GET'){
+  const rows=await database()`SELECT min(btrim(data->>'series')) AS name FROM cms_records
+   WHERE kind IN ('articles','news') AND btrim(data->>'series')<>''
+   GROUP BY lower(btrim(data->>'series')) ORDER BY name`;
+  return json({items:rows.map(row=>row.name)});
+ }
  if(path[0]==='collected'){
  const store=createCollectedStore(database());
  if(req.method==='GET')return json({items:await store.list(),configured:!!process.env.APIFY_API_TOKEN&&!!process.env.APIFY_ACTOR_ID});
  if(req.method==='POST'&&path[1]==='merge'){const body=z.object({id:z.string().regex(/^[a-f0-9]{64}$/),target:z.string().regex(/^[a-f0-9]{64}$/)}).parse(await req.json());return json(await store.merge(body.id,body.target));}
  if(req.method==='POST'&&path[1]==='import'){const body=z.object({runId:runIdSchema}).parse(await req.json());try{return json(await importApifyRun(body.runId));}catch(e:any){console.error('Apify import failed',{name:e?.name||'Error',code:e?.code||null,message:String(e?.message||'Unknown import failure').slice(0,500)});const message=String(e?.message||'');if(message.startsWith('Apify request failed')||message.startsWith('Configure APIFY_')||message.startsWith('Run must be successful')||message.startsWith('Run exceeds')||message.startsWith('Unexpected Apify dataset'))return json({error:message},502);return json({error:'Import failed. Check Vercel function logs for the Apify import failure details.'},503);}}
- if(req.method==='POST'&&path[1]&&/^[a-f0-9]{64}$/.test(path[1])){const body=z.discriminatedUnion('action',[z.object({action:z.literal('dismiss')}),z.object({action:z.literal('draft'),kind:z.enum(['articles','news']),categoryId:z.uuid().optional(),authorId:z.uuid().optional()})]).parse(await req.json());
+ if(req.method==='POST'&&path[1]&&/^[a-f0-9]{64}$/.test(path[1])){const body=z.discriminatedUnion('action',[z.object({action:z.literal('dismiss')}),z.object({action:z.literal('classify'),kind:z.enum(['articles','news','review'])}),z.object({action:z.literal('draft'),kind:z.enum(['articles','news']),categoryId:z.uuid().optional(),authorId:z.uuid().optional()})]).parse(await req.json());
  if(body.action==='dismiss')return json({items:await store.dismiss(path[1])});
+ if(body.action==='classify')return json(await store.classify(path[1],body.kind));
  return json({item:await store.convert(path[1],body)});}
  return json({error:'Method not allowed'},405);
  }
