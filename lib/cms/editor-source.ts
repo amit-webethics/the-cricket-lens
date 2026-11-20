@@ -1,14 +1,27 @@
 import type {SourceReference} from './source-reference';
-// Store every character while respecting the CMS's per-paragraph size limit.
-export function sourceParagraphs(text:string){const paragraphs:string[]=[];for(const paragraph of text.split(/\n\s*\n/).filter(p=>p.trim())){for(let i=0;i<paragraph.length;i+=20000)paragraphs.push(paragraph.slice(i,i+20000));}if(paragraphs.length>50){const full=paragraphs.join('\n\n');return Array.from({length:Math.ceil(full.length/20000)},(_,i)=>full.slice(i*20000,(i+1)*20000));}return paragraphs.length?paragraphs:[''];}
-export function fillEditorFromSource(kind:'articles'|'news',data:Record<string,any>,source:SourceReference):Record<string,any>{
- const sourceContent=[...(data.sourceContent||[]).filter((r:SourceReference)=>r.url!==source.url),source];
- if(sourceContent.length>5||sourceContent.reduce((n,r)=>n+r.text.length,0)>200000)throw new Error('Remove an older fetched source before adding more content.');
+
+export type RewrittenSourceSection = {heading:string; body:string[]};
+
+export function fillEditorFromSource(
+ kind:'articles'|'news',
+ data:Record<string,any>,
+ source:SourceReference,
+ sections:RewrittenSourceSection[],
+):Record<string,any>{
+ if(!sections.length)throw new Error('The rewrite did not contain any sections.');
+ const sourceContent=[...(data.sourceContent||[]).filter((reference:SourceReference)=>reference.url!==source.url),source];
+ if(sourceContent.length>5||sourceContent.reduce((total,reference)=>total+reference.text.length,0)>200000){
+  throw new Error('Remove an older fetched source before adding more content.');
+ }
  const tags=[...new Set([...(data.tags||[]),...(source.tags||[])])].slice(0,20);
- const suggestedImage=source.imageUrl||'';
- const imageSuggestion={sourceImageUrl:suggestedImage,sourceImageAlt:source.imageAlt||'',sourceImageCredit:source.imageCredit||''};
- const allParagraphs=source.sections.flatMap(section=>section.body.map((body,i)=>({heading:(section.heading&&section.heading!=='Story'?section.heading+' — ':'')+'Paragraph '+(i+1),body:sourceParagraphs(body)})));
- const paragraphs=allParagraphs.length<=50?allParagraphs:[...allParagraphs.slice(0,49),{heading:'Remaining source paragraphs',body:sourceParagraphs(allParagraphs.slice(49).flatMap(s=>s.body).join('\\n\\n'))}];
- if(kind==='news')return {...data,sourceContent,tags,...imageSuggestion,details:source.text,detailsFormat:'plain',newsSections:paragraphs.map(s=>({heading:s.heading,content:s.body.join('\\n\\n'),format:'plain'})),verified:false};
- return {...data,sourceContent,tags,...imageSuggestion,sections:paragraphs.length?paragraphs:[{heading:'Story',body:sourceParagraphs(source.text)}],verified:false};
+ const metadata={
+  sourceContent,tags,verified:false,
+  sourceImageUrl:source.imageUrl||'',
+  sourceImageAlt:source.imageAlt||'',
+  sourceImageCredit:source.imageCredit||'',
+ };
+ if(kind==='articles')return {...data,...metadata,sections};
+ const newsSections=sections.map(({heading,body})=>({heading,content:body.join('\n\n'),format:'plain'}));
+ const details=newsSections.map(({heading,content})=>heading+'\n\n'+content).join('\n\n');
+ return {...data,...metadata,details,detailsFormat:'plain',newsSections};
 }

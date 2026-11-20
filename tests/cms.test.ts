@@ -1,4 +1,5 @@
 import {test,before,after} from 'node:test';
+import {fillEditorFromSource} from '../lib/cms/editor-source';
 import {classifyStory,suggestDraftMetadata} from '../lib/cms/story-suggestions';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -49,4 +50,26 @@ test('imported story suggestions preserve uncertainty and fit draft field limits
  assert.ok(metadata.seoTitle.length<=70);
  assert.ok(metadata.seoDescription.length<=180);
  assert.equal(suggestDraftMetadata({title:'A day at the ground'}).seoDescription,'A day at the ground');
+});
+
+test('fetched rewrites populate editable sections without inserting raw source text',()=>{
+ const source={
+  url:'https://example.com/story',publisher:'Cricket source',title:'Team update',
+  fetchedAt:'2026-11-20T00:00:00.000Z',text:'Raw reference for fact checking.',
+  sections:[],warning:'',tags:['ODI'],
+ };
+ const sections=[
+  {heading:'Conway ruled out of the opener',body:['Conway will miss the first ODI.']},
+  {heading:'New Zealand consider a replacement',body:['The captain discussed a replacement.','The final XI is pending.']},
+ ];
+ const article=fillEditorFromSource('articles',{verified:true},source,sections);
+ assert.deepEqual(article.sections,sections);
+ assert.deepEqual(article.sourceContent,[source]);
+ assert.equal(article.verified,false);
+ const news=fillEditorFromSource('news',{summary:'Existing sidebar summary'},source,sections);
+ assert.equal(news.summary,'Existing sidebar summary');
+ assert.equal(news.newsSections[1].content,sections[1].body.join('\n\n'));
+ assert.ok(news.details.includes(sections[0].heading));
+ assert.ok(!news.details.includes(source.text));
+ assert.throws(()=>fillEditorFromSource('articles',{},source,[]));
 });
