@@ -16,16 +16,6 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
  const body=z.object({url:z.string().max(1500)}).parse(await req.json());
  try{return json({source:await fetchSourceContent(body.url)});}catch(e:any){console.error('Source fetch failed',{code:e.message?.startsWith('SOURCE_')?e.message:e.name});return json({error:sourceErrorMessage(e.message)},e.message==='SOURCE_URL'?400:502);}
  }
- if(path[0]==='rewrite-source'&&path.length===1&&req.method==='POST'){
-  const {sourceRewriteInput,rewriteFetchedSource,draftErrorMessage}=await import('../../../../lib/cms/drafting');
-  const raw=await req.text();
-  if(Buffer.byteLength(raw)>1000000)return json({error:'The fetched source is too large to rewrite.'},413);
-  const input=sourceRewriteInput.parse(JSON.parse(raw));
-  try{return json(await rewriteFetchedSource(input));}catch(error:any){
-   console.error('Source rewrite failed',{code:error?.name,status:error?.statusCode});
-   return json({error:draftErrorMessage(error)},503);
-  }
- }
  if(path[0]==='draft-section'&&req.method==='POST'){
  const {sectionDraftInput,generateSection,draftErrorMessage}=await import('../../../../lib/cms/drafting');
  const raw=await req.text();if(Buffer.byteLength(raw)>500000)return json({error:'Keep the drafting context below 500 KB.'},413);
