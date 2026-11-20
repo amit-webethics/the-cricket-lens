@@ -52,24 +52,29 @@ test('imported story suggestions preserve uncertainty and fit draft field limits
  assert.equal(suggestDraftMetadata({title:'A day at the ground'}).seoDescription,'A day at the ground');
 });
 
-test('fetched rewrites populate editable sections without inserting raw source text',()=>{
+test('source fetch preserves editable sections and suggests an image',()=>{
  const source={
   url:'https://example.com/story',publisher:'Cricket source',title:'Team update',
   fetchedAt:'2026-11-20T00:00:00.000Z',text:'Raw reference for fact checking.',
-  sections:[],warning:'',tags:['ODI'],
+  sections:[] as {heading:string;body:string[]}[],warning:'',tags:['ODI'],imageUrl:'https://example.com/story.jpg',
  };
  const sections=[
   {heading:'Conway ruled out of the opener',body:['Conway will miss the first ODI.']},
   {heading:'New Zealand consider a replacement',body:['The captain discussed a replacement.','The final XI is pending.']},
  ];
- const article=fillEditorFromSource('articles',{verified:true},source,sections);
+ source.sections=sections;
+ const article=fillEditorFromSource('articles',{verified:true,tags:['Existing tag']},source);
  assert.deepEqual(article.sections,sections);
  assert.deepEqual(article.sourceContent,[source]);
+ assert.deepEqual(article.tags,['Existing tag']);
+ assert.equal(article.sourceImageUrl,source.imageUrl);
+ assert.equal(article.imageUrl,undefined);
  assert.equal(article.verified,false);
- const news=fillEditorFromSource('news',{summary:'Existing sidebar summary'},source,sections);
+ const news=fillEditorFromSource('news',{summary:'Existing sidebar summary'},source);
  assert.equal(news.summary,'Existing sidebar summary');
  assert.equal(news.newsSections[1].content,sections[1].body.join('\n\n'));
  assert.ok(news.details.includes(sections[0].heading));
  assert.ok(!news.details.includes(source.text));
- assert.throws(()=>fillEditorFromSource('articles',{},source,[]));
+ const fallback=fillEditorFromSource('articles',{}, {...source,sections:[]});
+ assert.deepEqual(fallback.sections,[{heading:'Source text',body:[source.text]}]);
 });
