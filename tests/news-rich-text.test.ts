@@ -12,7 +12,7 @@ test('rich news retains supported formatting and removes scripts, event handlers
 test('legacy news and fetched content stay readable and literal markup is escaped',()=>{
  assert.equal(newsDetailsHtml('First paragraph.\n\nSecond paragraph.'),'<p>First paragraph.</p><p>Second paragraph.</p>');assert.equal(newsDetailsHtml('<script>literal</script>','plain'),'<p>&lt;script&gt;literal&lt;/script&gt;</p>');
  const source={url:'https://www.cricbuzz.com/cricket-news/123/news',publisher:'Cricbuzz',title:'News',fetchedAt:new Date().toISOString(),text:'Fetched paragraph.',sections:[],warning:''};
- const filled=fillEditorFromSource('news',{details:'<h2>Old</h2>',detailsFormat:'html'},source);assert.equal(filled.detailsFormat,'plain');assert.equal(newsDetailsHtml(filled.details,filled.detailsFormat),'<p>Fetched paragraph.</p>');
+ const filled=fillEditorFromSource('news',{details:'<h2>Old</h2>',detailsFormat:'html'},source,[{heading:'Selection update',body:['Rewritten paragraph.']}]);assert.equal(filled.detailsFormat,'plain');assert.equal(newsDetailsHtml(filled.details,filled.detailsFormat),'<p>Selection update</p><p>Rewritten paragraph.</p>');
  assert.equal(richTextToPlain('<h2>Heading</h2><p>Bat &amp; ball</p>'),'Heading\n\nBat & ball');assert.equal(plainTextToHtml('AI paragraph one.\n\nAI paragraph two.'),'<p>AI paragraph one.</p><p>AI paragraph two.</p>');
 });
 test('AI sees readable text from formatted details, without markup instructions',async()=>{
