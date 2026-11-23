@@ -92,13 +92,62 @@ export function createCollectedStore(sql:ReturnType<typeof database>){
  async dismiss(id:string){return sql`UPDATE cms_collected SET state='dismissed' WHERE (COALESCE(group_id,id)=${id} OR id=${id}) AND entry_id IS NULL RETURNING id`;}
  };
 }
-export async function importApifyRun(input:unknown,fetcher:typeof fetch=fetch,store=createCollectedStore(database())){
- const runId=runIdSchema.parse(input);const token=process.env.APIFY_API_TOKEN,actorId=process.env.APIFY_ACTOR_ID;
+const activeStatuses=new Set(['READY','RUNNING','TIMING-OUT','ABORTING']);
+
+function apifyClient(fetcher:typeof fetch=fetch){
+ const token=process.env.APIFY_API_TOKEN,actorId=process.env.APIFY_ACTOR_ID;
  if(!token||!actorId)throw new Error('Configure APIFY_API_TOKEN and APIFY_ACTOR_ID on the server');
- const get=async(path:string)=>{const r=await fetcher(`https://api.apify.com/v2/${path}`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store',signal:AbortSignal.timeout(20000)});if(!r.ok)throw new Error(`Apify request failed (${r.status})`);return r.json();};
- const {data:run}=await get(`actor-runs/${runId}`);
- if(run.actId!==actorId||run.status!=='SUCCEEDED'||!/^[A-Za-z0-9]+$/.test(run.defaultDatasetId))throw new Error('Run must be successful and belong to the configured collector');
+ async function request(path:string,input?:Record<string,unknown>){
+  const response=await fetcher(`https://api.apify.com/v2/${path}`,{
+   ...(input?{method:'POST',body:JSON.stringify(input)}:{}),
+   headers:{Authorization:`Bearer ${token}`,...(input?{'Content-Type':'application/json'}:{})},
+   cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20000),
+  });
+  if(!response.ok)throw new Error(`Apify request failed (${response.status})`);
+  return response.json();
+ }
+ return {actorId,request};
+}
+
+function collectorRun(run:any,actorId:string){
+ if(run?.actId!==actorId||!runIdSchema.safeParse(run.id).success||typeof run.status!=='string'){
+  throw new Error('Apify run does not belong to the configured collector');
+ }
+ return run;
+}
+
+export async function startApifyImport(){
+ const {actorId,request}=apifyClient();
+ const path=`acts/${encodeURIComponent(actorId)}/runs`;
+ const rawInput=process.env.APIFY_ACTOR_INPUT_JSON?.trim();
+ let input:Record<string,unknown>={};
+ if(rawInput){
+  try{input=z.record(z.string(),z.unknown()).parse(JSON.parse(rawInput));}
+  catch{throw new Error('Configure APIFY_ACTOR_INPUT_JSON as a JSON object on the server');}
+ }
+ return database().begin(async tx=>{
+  // Serialize start requests so simultaneous clicks reuse the active run.
+  await tx`SELECT pg_advisory_xact_lock(hashtext(${'collected-apify:'+actorId})::bigint)`;
+  const {data}=await request(`${path}?desc=1&limit=1`);
+  const latest=data?.items?.[0];
+  const run=collectorRun(activeStatuses.has(latest?.status)?latest:(await request(path,input)).data,actorId);
+  return {runId:run.id,status:run.status};
+ });
+}
+
+export async function getApifyImportStatus(input:unknown){
+ const runId=runIdSchema.parse(input);
+ const {actorId,request}=apifyClient();
+ const run=collectorRun((await request(`actor-runs/${runId}`)).data,actorId);
+ return {status:run.status,active:activeStatuses.has(run.status)};
+}
+
+export async function importApifyRun(input:unknown,fetcher:typeof fetch=fetch,store=createCollectedStore(database())){
+ const runId=runIdSchema.parse(input);
+ const {actorId,request}=apifyClient(fetcher);
+ const {data:run}=await request(`actor-runs/${runId}`);
+ if(run?.actId!==actorId||run.status!=='SUCCEEDED'||typeof run.defaultDatasetId!=='string'||!/^[A-Za-z0-9]+$/.test(run.defaultDatasetId))throw new Error('Run must be successful and belong to the configured collector');
  const rows:any[]=[];
- for(let offset=0;offset<=5000;offset+=250){const page=await get(`datasets/${run.defaultDatasetId}/items?format=json&offset=${offset}&limit=250`);if(!Array.isArray(page))throw new Error('Unexpected Apify dataset response');rows.push(...page);if(rows.length>5000)throw new Error('Run exceeds the 5000-story import limit');if(page.length<250)break;}
+ for(let offset=0;offset<=5000;offset+=250){const page=await request(`datasets/${run.defaultDatasetId}/items?format=json&offset=${offset}&limit=250`);if(!Array.isArray(page))throw new Error('Unexpected Apify dataset response');rows.push(...page);if(rows.length>5000)throw new Error('Run exceeds the 5000-story import limit');if(page.length<250)break;}
  return store.importRows(rows,runId);
 }
