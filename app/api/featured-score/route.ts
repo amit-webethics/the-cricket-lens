@@ -5,32 +5,34 @@ import {featuredMatch,parseFeaturedScore,type FeaturedScore} from '../../../lib/
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
-function respond(score:FeaturedScore|null,enabled=true){
- return NextResponse.json({enabled,score},{headers:{'Cache-Control':'no-store','Vercel-CDN-Cache-Control':'public, s-maxage=60'}});
+function respond(score:FeaturedScore|null,enabled=true,message=''){
+ return NextResponse.json({enabled,score,message},{headers:{'Cache-Control':'no-store'}});
 }
 
-export async function GET(){
- const key=process.env.RAPIDAPI_KEY?.trim();
- const limit=Number(process.env.RAPIDAPI_SCORE_REQUEST_LIMIT);
- if(!key||!Number.isInteger(limit)||limit<1||limit>1000)return respond(null,false);
+export function GET(){return scoreResponse(false);}
+export function POST(){return scoreResponse(true);}
+
+async function scoreResponse(refresh:boolean){
+ const key=process.env.CRICKETDATA_API_KEY?.trim();
+ if(!key)return respond(null,false);
  const id=featuredMatch.id;
  try{
   const sql=database();
   // Reserve usage before the request. The shared row enforces the same budget across instances.
-  const reserved=await sql`
+  const reserved=refresh?await sql`
    UPDATE featured_score_cache
-   SET attempts=ARRAY(SELECT t FROM unnest(attempts) AS a(t) WHERE t>now()-interval '31 days') || ARRAY[now()]
+   SET attempts=ARRAY(SELECT t FROM unnest(attempts) AS a(t) WHERE t>now()-interval '24 hours') || ARRAY[now()]
    WHERE match_id=${id}
     AND COALESCE(snapshot->>'complete','false')<>'true'
     AND COALESCE(attempts[cardinality(attempts)],'-infinity'::timestamptz)<=now()-interval '15 minutes'
-    AND (SELECT count(*) FROM unnest(attempts) AS a(t) WHERE t>now()-interval '31 days')<${limit}
+    AND (SELECT count(*) FROM unnest(attempts) AS a(t) WHERE t>now()-interval '24 hours')<96
    RETURNING match_id
-  `;
+  `:[];
   if(reserved.length){
    try{
-    const host='cricbuzz-cricket.p.rapidapi.com';
-    const response=await fetch(`https://${host}/mcenter/v1/${id}/scard`,{
-     headers:{'x-rapidapi-key':key,'x-rapidapi-host':host},
+    const url=new URL('https://api.cricapi.com/v1/currentMatches');
+    url.search=new URLSearchParams({apikey:key,offset:'0'}).toString();
+    const response=await fetch(url,{
      cache:'no-store',redirect:'error',signal:AbortSignal.timeout(8000),
     });
     if(response.ok){
@@ -45,8 +47,10 @@ export async function GET(){
    }
   }
   const rows=await sql`SELECT snapshot FROM featured_score_cache WHERE match_id=${id}`;
-  return respond(rows[0]?.snapshot??null);
+  const snapshot:FeaturedScore|null=rows[0]?.snapshot??null;
+  const message=refresh&&!snapshot?.complete?(reserved.length?'A fresh score is unavailable. Try again in 15 minutes.':'A refresh was requested recently. Try again in 15 minutes.') : '';
+  return respond(snapshot,true,message);
  }catch{
-  return respond(null);
+  return respond(null,true,'Score feed is temporarily unavailable.');
  }
 }
