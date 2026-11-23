@@ -54,7 +54,7 @@ export default function Collected(){
     setProgress('Importing collected stories…');
     const result=await api('collected/import',{method:'POST',body:JSON.stringify({runId:pendingRun}),signal:controller.signal});
     if(controller.signal.aborted)return;
-    setNotice(`${result.inserted} new stories · ${result.duplicates} already collected · ${result.invalid} invalid rows`);
+    setNotice(`${result.inserted} new stories · ${result.duplicates} already collected · ${result.invalid} invalid rows${result.skipped? ` · ${result.skipped} from other sources skipped` : ''}`);
     finish();
     await load();
    }catch(error){
@@ -67,6 +67,20 @@ export default function Collected(){
   void check();
   return ()=>{controller.abort();clearTimeout(timer);};
  },[pendingRun,watching]);
+
+ async function clearNewStories(){
+  if(!window.confirm('Move all new collected stories to Dismissed? Articles and news in the editor will stay available.'))return;
+  setBusy(true);setError('');setNotice('');
+  try{
+   const {cleared}=await api('collected/clear',{method:'POST'});
+   setFilter('new');
+   setStoryType('all');
+   setNotice(cleared===1?'1 story moved to Dismissed.':`${cleared} stories moved to Dismissed.`);
+   await load();
+  }catch(error){
+   setError(error instanceof Error?error.message:'Unable to clear collected stories.');
+  }finally{setBusy(false);}
+ }
 
  async function collectStories(){
   setError('');
@@ -105,11 +119,12 @@ export default function Collected(){
  {error&&<div className="admin-alert error" role="alert">{error}</div>}{notice&&<div className="admin-alert success" role="status">{notice}</div>}
  <section className="admin-panel admin-form-panel"><div className="admin-panel-heading"><h2>Import stories</h2></div><div className="admin-fields">
  <button type="button" className="admin-primary" disabled={!configured||busy||watching} onClick={collectStories}>{watching?'Import in progress…':pendingRun?'Resume import':'Run Apify & import stories'}</button>
+ <small>New imports use Cricbuzz only.</small>
  {progress&&<p role="status">{progress}</p>}
  {!configured&&<p role="status">Configure the Apify API token and collector Actor ID on the server.</p>}
- </div><details className="admin-fields"><summary>Import an existing run by ID</summary><form className="admin-fields" onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');setNotice('');try{const r=await api('collected/import',{method:'POST',body:JSON.stringify({runId:runId.trim()})});setNotice(`${r.inserted} new stories · ${r.duplicates} already collected · ${r.invalid} invalid rows`);await load();}catch(e:any){setError(e.message)}finally{setBusy(false)}}}>
+ </div><details className="admin-fields"><summary>Import an existing run by ID</summary><form className="admin-fields" onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');setNotice('');try{const r=await api('collected/import',{method:'POST',body:JSON.stringify({runId:runId.trim()})});setNotice(`${r.inserted} new stories · ${r.duplicates} already collected · ${r.invalid} invalid rows${r.skipped? ` · ${r.skipped} from other sources skipped` : ''}`);await load();}catch(e:any){setError(e.message)}finally{setBusy(false)}}}>
  <label><span className="admin-field-label">Apify run ID<span className="admin-required" aria-hidden="true">*</span></span><input required value={runId} onChange={e=>setRunId(e.target.value)} placeholder="Run ID from your completed run"/></label><button className="admin-primary" disabled={busy||watching||!configured}>{busy?'Working…':'Import run'}</button><small>Re-importing preserves existing stories and your edits.</small></form></details></section>
- <div className="admin-list-toolbar"><label>Show <select value={filter} onChange={e=>setFilter(e.target.value)}><option value="new">New stories</option><option value="drafted">Sent to editor</option><option value="dismissed">Dismissed</option><option value="all">All (latest 500)</option></select></label><label>Story type <select value={storyType} onChange={e=>setStoryType(e.target.value)}>{storyTypes.map(type=><option key={type.value} value={type.value}>{type.label}</option>)}</select></label></div>
+ <div className="admin-list-toolbar"><label>Show <select value={filter} onChange={e=>setFilter(e.target.value)}><option value="new">New stories</option><option value="drafted">Sent to editor</option><option value="dismissed">Dismissed</option><option value="all">All (latest 500)</option></select></label><label>Story type <select value={storyType} onChange={e=>setStoryType(e.target.value)}>{storyTypes.map(type=><option key={type.value} value={type.value}>{type.label}</option>)}</select></label><button type="button" className="admin-secondary" disabled={busy||watching||loading||!items.some(row=>row.state==='new')} onClick={clearNewStories}>Clear new stories</button></div>
  {loading?<p>Loading stories…</p>:visible.length===0?<div className="admin-empty">No stories in this view yet.</div>:visible.map(row=>{const d=row.data,c=choice(row);return <section className="admin-panel admin-form-panel" key={row.id}><div className="admin-panel-heading"><h2>{d.title}</h2><span className="admin-status draft">{storyTypes.find(type=>type.value===d.kind)?.label} · {row.state}</span></div><div className="admin-fields"><div><b>Sources ({row.references?.length||1})</b>{(row.references||[d]).map((ref:any)=><p key={ref.url}><a href={ref.url} target="_blank" rel="noreferrer">{ref.source} ↗</a> · {ref.published||'Source date missing'}<br/><small>{ref.title}</small></p>)}<small>Collected: {new Date(row.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})} IST</small></div><p>{d.summary||'No summary supplied. Open the source to review the story.'}</p><small>Source tags: {d.tags||'None'} · {d.reason}. {d.dateCheck}</small>
  {row.possibleDuplicates?.length>0&&<div><b>Possible related coverage — review before merging</b><ul>{row.possibleDuplicates.map((p:any)=><li key={p.id}>{p.title}</li>)}</ul></div>}
 

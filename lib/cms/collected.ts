@@ -27,16 +27,20 @@ export function normalizeStory(raw:any,runId:string){
 export function createCollectedStore(sql:ReturnType<typeof database>){
  return {
  async importRows(rows:any[],runId:string){
-  let inserted=0,duplicates=0,invalid=0;
-  const normalized=[];for(const row of rows){try{normalized.push(normalizeStory(row,runId));}catch{invalid++;}}
+  let inserted=0,duplicates=0,invalid=0,skipped=0;
+  const normalized=[];for(const row of rows){try{
+   const story=normalizeStory(row,runId);
+   if(!['cricbuzz.com','www.cricbuzz.com'].includes(new URL(story.url).hostname)){skipped++;continue;}
+   normalized.push(story);
+  }catch{invalid++;}}
   await sql.begin(async tx=>{
    await tx`LOCK TABLE cms_collected IN SHARE ROW EXCLUSIVE MODE`;
-   const recent=await tx`SELECT id,data,group_id FROM cms_collected WHERE created_at > now()-interval '7 days'`;
+   const recent=await tx`SELECT id,data,group_id FROM cms_collected WHERE state<>'dismissed' AND created_at > now()-interval '7 days'`;
    for(const row of normalized){
    const match=recent.find((r:any)=>coverageMatch(row,r.data)==='same');
    const groupId=match?(match.group_id||match.id):row.id;
    const result=await tx`INSERT INTO cms_collected(id,source_url,data,group_id) VALUES(${row.id},${row.url},${tx.json(row)},${groupId}) ON CONFLICT DO NOTHING RETURNING id`;if(result.length){inserted++;recent.push({id:row.id,data:row,group_id:groupId});}else duplicates++;}});
-  return {inserted,duplicates,invalid,total:rows.length};
+  return {inserted,duplicates,invalid,skipped,total:rows.length};
  },
  async list(){
   const rows=await sql`WITH latest AS (SELECT COALESCE(group_id,id) AS root,max(created_at) AS newest FROM cms_collected GROUP BY COALESCE(group_id,id) ORDER BY newest DESC LIMIT 500) SELECT c.* FROM cms_collected c JOIN latest g ON COALESCE(c.group_id,c.id)=g.root ORDER BY g.newest DESC,c.created_at`;
@@ -87,6 +91,21 @@ export function createCollectedStore(sql:ReturnType<typeof database>){
    const entry=await store.saveEntry(choice.kind,value);
    await tx`UPDATE cms_collected SET state='drafted',entry_id=${entry.id},entry_kind=${choice.kind} WHERE COALESCE(group_id,id)=${id} OR id=${id}`;
    return {id:entry.id,kind:entry.kind};
+  });
+ },
+ async clearNew(){
+  return sql.begin(async tx=>{
+   await tx`LOCK TABLE cms_collected IN SHARE ROW EXCLUSIVE MODE`;
+   const rows=await tx`
+    UPDATE cms_collected AS story SET state='dismissed'
+    WHERE story.state='new' AND story.entry_id IS NULL AND NOT EXISTS (
+     SELECT 1 FROM cms_collected AS linked
+     WHERE COALESCE(linked.group_id,linked.id)=COALESCE(story.group_id,story.id)
+      AND linked.entry_id IS NOT NULL
+    )
+    RETURNING COALESCE(story.group_id,story.id) AS group_id
+   `;
+   return {cleared:new Set(rows.map(row=>row.group_id)).size};
   });
  },
  async dismiss(id:string){return sql`UPDATE cms_collected SET state='dismissed' WHERE (COALESCE(group_id,id)=${id} OR id=${id}) AND entry_id IS NULL RETURNING id`;}
