@@ -3,10 +3,17 @@ import {z} from 'zod';
 import {database,listEntries,saveEntry} from '../../../../lib/cms/db';
 import {sameOrigin} from '../../../../lib/cms/auth';import {isAdmin} from '../../../../lib/neon/server';
 import {kinds,Kind} from '../../../../lib/cms/schema';
-import {createCollectedStore,importApifyRun,runIdSchema} from '../../../../lib/cms/collected';
+import {createCollectedStore,importApifyRun,runIdSchema,startApifyImport,getApifyImportStatus} from '../../../../lib/cms/collected';
 export const runtime='nodejs';
 export const maxDuration=60;
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
+function apifyRunError(error:unknown){
+ const message=error instanceof Error?error.message:'';
+ if(error instanceof z.ZodError)return json({error:'Invalid Apify run ID.'},400);
+ if(/^(Configure APIFY_|Apify request failed \(\d+\)$|Apify run does not belong)/.test(message))return json({error:message},502);
+ console.error('Apify collector request failed',{name:error instanceof Error?error.name:'Unknown error'});
+ return json({error:'Unable to start or check the Apify run. Please try again.'},503);
+}
 async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}){const {path}=await params;try{
  if(req.method!=='GET'&&!sameOrigin(req))return json({error:'Request origin is not allowed'},403);
  if(path[0]==='session'&&req.method==='GET')return json({configured:!!process.env.NEON_AUTH_BASE_URL,authenticated:await isAdmin()});
@@ -35,6 +42,12 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
  }
  if(path[0]==='collected'){
  const store=createCollectedStore(database());
+ if(req.method==='GET'&&path[1]==='run'&&path[2]){
+  try{return json(await getApifyImportStatus(path[2]));}catch(error){return apifyRunError(error);}
+ }
+ if(req.method==='POST'&&path[1]==='run'&&path.length===2){
+  try{return json(await startApifyImport(),202);}catch(error){return apifyRunError(error);}
+ }
  if(req.method==='GET')return json({items:await store.list(),configured:!!process.env.APIFY_API_TOKEN&&!!process.env.APIFY_ACTOR_ID});
  if(req.method==='POST'&&path[1]==='merge'){const body=z.object({id:z.string().regex(/^[a-f0-9]{64}$/),target:z.string().regex(/^[a-f0-9]{64}$/)}).parse(await req.json());return json(await store.merge(body.id,body.target));}
  if(req.method==='POST'&&path[1]==='import'){const body=z.object({runId:runIdSchema}).parse(await req.json());try{return json(await importApifyRun(body.runId));}catch(e:any){console.error('Apify import failed',{name:e?.name||'Error',code:e?.code||null,message:String(e?.message||'Unknown import failure').slice(0,500)});const message=String(e?.message||'');if(message.startsWith('Apify request failed')||message.startsWith('Configure APIFY_')||message.startsWith('Run must be successful')||message.startsWith('Run exceeds')||message.startsWith('Unexpected Apify dataset'))return json({error:message},502);return json({error:'Import failed. Check Vercel function logs for the Apify import failure details.'},503);}}
