@@ -44,9 +44,10 @@ export default function FeaturedScore(){
     {innings.overs===null?'':` (${innings.overs} ov)`}
    </p>)}
    <p>{score.status}</p>
-   <small>Updated <time dateTime={score.updatedAt}>{new Date(score.updatedAt).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} IST</time></small>
-  </div>:<p>No score has been received yet.</p>}
-  <button type="button" className="text-button" disabled={!enabled||busy||score?.complete} onClick={refresh}>{busy?'Refreshing…':'Refresh score'}</button>
+   <small>Last checked <time dateTime={score.updatedAt}>{new Date(score.updatedAt).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} IST</time></small>
+  </div>:null}
+  {enabled&&!score?.complete&&<button type="button" className="text-button" disabled={busy} onClick={refresh}>{busy?'Refreshing…':'Refresh score'}</button>}
+  <p><a className="text-button" href={featuredMatch.source} target="_blank" rel="noopener noreferrer">{score?.complete?'Full scorecard on Cricbuzz':'Live score on Cricbuzz'} ↗</a></p>
   {message&&<p role="status">{message}</p>}
  </section>;
 }

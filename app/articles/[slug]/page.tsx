@@ -14,6 +14,12 @@ import {publicContent} from '../../../lib/cms/public';
 
 export function generateStaticParams(){return articles.map(a=>({slug:a.slug}))}
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const {slug}=await params;const {articles:published}=await publicContent();const item=published.find(a=>a.slug===slug);return item?storyMetadata(item,`/articles/${slug}/`,'article'):{title:'Story not found',robots:{index:false}};}
+
+function PhotoCredit({credit}:{credit?:string}){
+  if(!credit)return null;
+  return <figcaption>{credit.split(/(https?:\/\/[^\s|]+)/g).map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</figcaption>;
+}
+
 export default async function Article({params}:{params:Promise<{slug:string}>}){
   const {slug}=await params; const {articles:published}=await publicContent(); const a=published.find(a=>a.slug===slug); if(!a)notFound();
   const date=a.publishedAt?new Date(a.publishedAt):null;
@@ -33,11 +39,11 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
       <p className="standfirst">{a.description}</p>
       {!a.label&&<ArticleShare slug={a.slug} title={a.title}/>}
     </header>
-    <figure className="article-image">{a.imageUrl?<img className="article-cover" src={a.imageUrl} alt={a.imageAlt||''}/>:<Art kind={a.art}/>} {a.imageCredit&&<figcaption>{a.imageCredit.split(/(https?:\/\/[^\s|]+)/g).map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</figcaption>}</figure>
+    <figure className="article-image">{a.imageUrl?<img className="article-cover" src={a.imageUrl} alt={a.imageAlt||''}/>:<Art kind={a.art}/>}<PhotoCredit credit={a.imageCredit}/></figure>
     <div className="article-content-layout">
       <div className="article-body">
         {a.label&&<div className="draft-notice"><b>Editorial draft</b><p>This sample match report is awaiting scorecard verification. It is shown here for design review.</p></div>}
-        {a.sections.map((s,i)=><section id={`section-${i}`} key={i}><h2>{s.heading}</h2>{s.body.map((p,n)=><p key={n}>{p}</p>)}</section>)}
+        {a.sections.map((s,i)=><section id={`section-${i}`} key={i}><h2>{s.heading}</h2>{s.body.map((p,n)=><p key={n}>{p}</p>)}{s.image&&<figure className="article-image article-section-image"><img className="article-cover" src={s.image.url} alt={s.image.alt} loading="lazy"/><PhotoCredit credit={s.image.credit}/></figure>}</section>)}
         {a.correctionNote&&<div className="draft-notice"><b>Update / correction</b><p>{a.correctionNote}</p><small>Updated {a.updatedAt?new Date(a.updatedAt).toLocaleDateString('en-IN'):''}</small></div>}
         {a.scorecard&&<div className="article-score-action"><Link className="scorecard-link" href={`/scorecards/${a.slug}/`}>View full scorecard <ArrowUpRight size={16}/></Link></div>}
         <div className="article-end">● <span>THE CRICKET LENS</span></div>

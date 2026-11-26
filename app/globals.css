@@ -352,6 +352,7 @@ body[data-theme="dark"] .article-page .article-body .more-related-stories{border
 
 .article-page .article-image{width:min(100%,960px);margin-inline:auto}
 .article-page .article-image>.article-cover{height:auto;aspect-ratio:auto;max-height:clamp(260px,57vh,520px);object-fit:contain}
+.article-page .article-section-image{margin-block:16px 0}
 
 .article-share{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
 .article-share .article-social-icon,.admin-table .article-social-icon{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid transparent;border-radius:8px;color:#fff;text-decoration:none;transition:filter .15s,border-color .15s}
