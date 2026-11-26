@@ -3,6 +3,7 @@ import {fillEditorFromSource} from '../lib/cms/editor-source';
 import {classifyStory,suggestDraftMetadata} from '../lib/cms/story-suggestions';
 import {draftMarkdownTemplate,parseDraftMarkdown} from '../lib/cms/draft-markdown';
 import {indexArticleGroups} from '../lib/cms/article-groups';
+import {selectRelatedStories} from '../lib/cms/related-stories';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -83,6 +84,22 @@ test('published article groups order child links and keep stories accessible wit
  assert.deepEqual(groups.childrenFor(main),[first,second,last]);
  assert.equal(groups.mainFor(first),main);
  assert.deepEqual(indexArticleGroups([standalone,first]).topLevel,[standalone,first]);
+});
+
+test('related stories favor group and topic matches and link to distinct stories',()=>{
+ const current={slug:'current',series:'A tour',team:'Australia',category:'Analysis',tags:['Test cricket']};
+ const sibling={slug:'sibling'};
+ const series={slug:'series',series:' a TOUR '};
+ const topic={slug:'topic',tags:['TEST CRICKET','test cricket']};
+ const team={slug:'team',team:'australia'};
+ const category={slug:'category',category:'analysis'};
+ const recent={slug:'recent'};
+ const filler={slug:'other-recent'};
+ assert.deepEqual(
+  selectRelatedStories(current,[current,recent,team,category,topic,series,sibling,filler],[current,sibling]).map(story=>story.slug),
+  ['sibling','series','topic','team','category','recent'],
+ );
+ assert.deepEqual(selectRelatedStories({slug:'one'},[{slug:'one'},{slug:'two'}]),[{slug:'two'}]);
 });
 
 test('article Markdown imports preserve a series, table slugs, paragraphs and source URLs',()=>{

@@ -1,6 +1,7 @@
 import {storyMetadata,storyJsonLd} from '../../../lib/seo';
 import DetailRecentSidebar from '../../../components/DetailRecentSidebar';
-import ArticleGroupLinks from '../../../components/ArticleGroupLinks';
+import ArticleGroupLinks, {RelatedStories} from '../../../components/ArticleGroupLinks';
+import {selectRelatedStories} from '../../../lib/cms/related-stories';
 import {indexArticleGroups} from '../../../lib/cms/article-groups';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
@@ -21,7 +22,7 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
   const main=groups.mainFor(a)??a;
   const groupStories=[main,...groups.childrenFor(main)].filter(story=>story.slug!==slug);
   const otherStories=groups.topLevel.filter(story=>story.slug!==main.slug);
-  const related=otherStories.slice(0,2);
+  const related=selectRelatedStories(a,otherStories,groupStories);
   return <main id="main" className="article-page"><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(storyJsonLd(a,`/articles/${slug}/`,'article')).replace(/</g,'\\u003c')}}/>
     <Link href="/#stories" className="back-link"><ArrowLeft size={16}/> Back to stories</Link>
     <header className="article-heading">
@@ -38,7 +39,7 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
         {a.correctionNote&&<div className="draft-notice"><b>Update / correction</b><p>{a.correctionNote}</p><small>Updated {a.updatedAt?new Date(a.updatedAt).toLocaleDateString('en-IN'):''}</small></div>}
         {a.scorecard&&<div className="article-score-action"><Link className="scorecard-link" href={`/scorecards/${a.slug}/`}>View full scorecard <ArrowUpRight size={16}/></Link></div>}
         <div className="article-end">● <span>THE CRICKET LENS</span></div>
-        <div className="source-note"><b>{a.label?'Source verification':'Sources & notes'}</b>{a.label&&<p>Prepared from the match notes supplied for this preview. An authoritative scorecard and source links must be added before publication.</p>}{a.sources?.map(s=><p key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.label} ↗</a></p>)}{a.authorBio&&<p>{a.authorBio}</p>}<Link href="/editorial/">Read our editorial standards ↗</Link></div>
+        <RelatedStories stories={related} authorBio={a.authorBio}/>
       </div>{groupStories.length>0
         ? <aside className="detail-right-sidebar article-group-sidebar" aria-labelledby="article-group-title">
           <h2 id="article-group-title">{main.series||'Related articles'}</h2>
@@ -46,6 +47,5 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
         </aside>
         : <DetailRecentSidebar stories={[...otherStories].sort((a,b)=>new Date(b.publishedAt||b.createdAt||0).getTime()-new Date(a.publishedAt||a.createdAt||0).getTime()).slice(0,6)}/>}
     </div>
-    {related.length>0&&<section className="related"><div className="section-heading"><h2>Keep looking closer.</h2><Link href="/#stories">All stories <ArrowUpRight size={18}/></Link></div><div className="related-grid">{related.map(x=><Link key={x.slug} href={`/articles/${x.slug}/`}>{x.imageUrl?<img className="related-cover" src={x.imageUrl} alt={x.imageAlt||''}/>:<Art kind={x.art}/>}<div><span className="card-category">{x.category}</span><h3>{x.title}</h3><span className="muted">{x.minutes} min read ↗</span></div></Link>)}</div></section>}
   </main>;
 }

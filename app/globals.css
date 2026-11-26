@@ -344,3 +344,7 @@ body[data-theme="dark"] .intl-format-card p{color:#c5c9dc}
 .article-page .article-group-sidebar .article-group-links{padding:12px 14px;gap:12px}
 body[data-theme="dark"] .article-group-links a{color:#b9b7ff}
 @media(max-width:800px){.article-page .article-content-layout .article-group-sidebar{display:block;max-width:690px;margin:26px auto 0}}
+
+.article-page .article-body .more-related-stories{margin:0;padding:18px 0 0;border-top:1px solid #e3e5ef}
+.article-page .article-body .article-author-bio{font-size:14px;line-height:1.7;margin:0 0 16px}
+body[data-theme="dark"] .article-page .article-body .more-related-stories{border-color:#383f56}
