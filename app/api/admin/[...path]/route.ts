@@ -18,6 +18,12 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
  if(req.method!=='GET'&&!sameOrigin(req))return json({error:'Request origin is not allowed'},403);
  if(path[0]==='session'&&req.method==='GET')return json({configured:!!process.env.NEON_AUTH_BASE_URL,authenticated:await isAdmin()});
  if(!await isAdmin())return json({error:'Sign in with the authorised admin account'},401);
+ if(path.length===2&&path[0]==='articles'&&path[1]==='import'){
+  if(req.method!=='POST')return json({error:'Method not allowed'},405);
+  const {handleDraftImport}=await import('../../../../lib/cms/draft-import');
+  const result=await handleDraftImport(req);
+  return json(result.data,result.status);
+ }
  if(path[0]==='source-content'&&req.method==='POST'){
  const {fetchSourceContent,sourceErrorMessage}=await import('../../../../lib/cms/source-content');
  const body=z.object({url:z.string().max(1500)}).parse(await req.json());

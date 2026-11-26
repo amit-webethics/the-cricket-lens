@@ -4,12 +4,20 @@ let client:ReturnType<typeof postgres>|undefined;
 export function database(){if(!process.env.DATABASE_URL)throw new Error('DATABASE_NOT_CONFIGURED');return client??=postgres(process.env.DATABASE_URL,{max:3,idle_timeout:20,connect_timeout:10,prepare:false});}
 export async function closeDatabase(){if(client){await client.end();client=undefined;}}
 const map=(r:any):Entry=>({id:r.id,kind:r.kind,title:r.title,slug:r.slug,status:r.status,data:r.data,revision:r.revision,createdAt:new Date(r.created_at).toISOString(),updatedAt:new Date(r.updated_at).toISOString(),publishedAt:r.published_at?new Date(r.published_at).toISOString():null});
+async function requireActiveEditorialReferences(tx:postgres.TransactionSql,categoryId:string,authorId:string){
+ for(const [kind,id] of [['categories',categoryId],['authors',authorId]] as const){
+  if(!id)continue;
+  const found=await tx`SELECT id FROM cms_records WHERE kind=${kind} AND id=${id} AND status='published' FOR SHARE`;
+  if(!found.length)throw new Error('Choose an active category and author');
+ }
+}
+
 export function createContentStore(sql:ReturnType<typeof postgres>,inTransaction=false){
 const transact=inTransaction?((fn:any)=>fn(sql)) as typeof sql.begin:sql.begin.bind(sql);
 async function listEntries(kind:Kind,publicOnly=false){const rows=publicOnly?await sql`SELECT id,kind,title,slug,status,(data - 'sourceContent') AS data,revision,created_at,updated_at,published_at FROM cms_records WHERE kind=${kind} AND status='published' ORDER BY published_at DESC NULLS LAST,created_at DESC`:await sql`SELECT * FROM cms_records WHERE kind=${kind} ORDER BY updated_at DESC`;return rows.map(map);}
 async function saveEntry(kind:Kind,input:unknown,id?:string,revision?:number){const data=schemas[kind].parse(input) as Record<string,any>;return transact(async tx=>{
  // One transaction protects related-record checks and optimistic edit revisions.
- if(kind==='articles'||kind==='news'){for(const [field,relatedKind] of [['categoryId','categories'],['authorId','authors']] as const){if(kind==='news'&&!data[field])continue;const found=await tx`SELECT id FROM cms_records WHERE kind=${relatedKind} AND id=${data[field]} AND status='published' FOR SHARE`;if(!found.length)throw new Error('Choose an active category and author');}}
+ if(kind==='articles'||kind==='news')await requireActiveEditorialReferences(tx,data.categoryId,data.authorId);
  if(['categories','authors'].includes(kind)&&id&&data.status!=='published'){await tx`SELECT id FROM cms_records WHERE id=${id} AND kind=${kind} FOR UPDATE`;const key=kind==='categories'?'categoryId':'authorId';const used=await tx`SELECT id FROM cms_records WHERE kind IN ('articles','news') AND data->>${key}=${id} AND status!='archived'`;if(used.length)throw new Error('This entry is used by articles or news. Reassign or archive those articles first.');}
  if((kind==='articles'||kind==='news')&&data.status==='scheduled'&&(!data.scheduledAt||Date.parse(data.scheduledAt)<=Date.now()))throw new Error('Choose a future scheduled time');
  if(kind==='settings'&&data.slug!=='site')throw new Error('The settings slug must be site');
@@ -19,7 +27,34 @@ async function saveEntry(kind:Kind,input:unknown,id?:string,revision?:number){co
  if(!rows.length)throw new Error('EDIT_CONFLICT');return map(rows[0]);
  });}
 
-return {listEntries,saveEntry};}
+async function existingArticleSlugs(slugs:string[]){
+ const rows=await sql`SELECT slug FROM cms_records WHERE kind='articles'
+  AND slug IN (SELECT jsonb_array_elements_text(${sql.json(slugs)}::jsonb))`;
+ return rows.map(row=>String(row.slug));
+}
+
+async function importArticleDrafts(articles:Record<string,unknown>[],categoryId:string,authorId:string){
+ const drafts=articles.map(article=>schemas.articles.parse({
+  ...article,categoryId,authorId,status:'draft',scheduledAt:'',verified:false,featured:false,
+ }));
+ return transact(async tx=>{
+  await requireActiveEditorialReferences(tx,categoryId,authorId);
+  const rows=await tx<Pick<Entry,'id'|'slug'|'title'>[]>`
+   INSERT INTO cms_records(kind,title,slug,status,data)
+   SELECT 'articles',draft->>'title',draft->>'slug','draft',draft
+   FROM jsonb_array_elements(${tx.json(drafts)}::jsonb) AS draft
+   ORDER BY draft->>'slug'
+   ON CONFLICT (kind,slug) DO NOTHING
+   RETURNING id,slug,title`;
+  const inserted=new Map(rows.map(row=>[row.slug,row]));
+  return {
+   imported:drafts.flatMap(draft=>{const row=inserted.get(draft.slug);return row?[row]:[];}),
+   skipped:drafts.filter(draft=>!inserted.has(draft.slug)).map(({slug,title})=>({slug,title})),
+  };
+ });
+}
+
+return {listEntries,saveEntry,existingArticleSlugs,importArticleDrafts};}
 export async function publishDueEntries(){const sql=database();const rows=await sql`UPDATE cms_records SET status='published',data=jsonb_set(data,'{status}','\"published\"'::jsonb),revision=revision+1,updated_at=now(),published_at=now() WHERE kind IN ('articles','news') AND status='scheduled' AND (data->>'scheduledAt')::timestamptz <= now() RETURNING id,kind,slug,title`;return rows.map(r=>({id:r.id,kind:r.kind,slug:r.slug,title:r.title}));}
 export const listEntries=(kind:Kind,publicOnly=false)=>createContentStore(database()).listEntries(kind,publicOnly);
 export const saveEntry=(kind:Kind,input:unknown,id?:string,revision?:number)=>createContentStore(database()).saveEntry(kind,input,id,revision);
