@@ -15,3 +15,10 @@
 .admin-import-preview summary{cursor:pointer;color:var(--brand);font-size:12px;font-weight:600}
 .admin-import-preview h3{font-size:14px;margin-bottom:8px}
 .admin-import-preview p,.admin-import-preview ul{font-size:13px;line-height:1.55}
+
+.admin-instagram-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start;gap:20px}
+.admin-instagram-photo{display:block;width:100%;max-height:480px;object-fit:contain;background:#f3f4f8;border-radius:8px}
+.admin-instagram-caption{margin:14px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.55}
+.admin-article-sharing{display:grid;justify-items:start;gap:12px}
+.admin-instagram-list-link{margin-inline-start:10px}
+@media(max-width:820px){.admin-instagram-grid{grid-template-columns:minmax(0,1fr)}}

@@ -1,5 +1,6 @@
 import {storyMetadata,storyJsonLd} from '../../../lib/seo';
 import DetailRecentSidebar from '../../../components/DetailRecentSidebar';
+import ArticleShare from '../../../components/ArticleShare';
 import ArticleGroupLinks, {RelatedStories} from '../../../components/ArticleGroupLinks';
 import {selectRelatedStories} from '../../../lib/cms/related-stories';
 import {indexArticleGroups} from '../../../lib/cms/article-groups';
@@ -30,6 +31,7 @@ export default async function Article({params}:{params:Promise<{slug:string}>}){
       <h1>{a.title}</h1>
       <div className="article-meta"><span>by <b>{a.author||'The Cricket Lens'}</b></span>{date&&<><span aria-hidden="true">•</span><time dateTime={a.publishedAt}>Published on {publishedDate} <span aria-hidden="true">•</span> {publishedTime} IST</time></>}<span aria-hidden="true">•</span><span>{a.minutes} min read</span></div>
       <p className="standfirst">{a.description}</p>
+      {!a.label&&<ArticleShare slug={a.slug} title={a.title}/>}
     </header>
     <figure className="article-image">{a.imageUrl?<img className="article-cover" src={a.imageUrl} alt={a.imageAlt||''}/>:<Art kind={a.art}/>} {a.imageCredit&&<figcaption>{a.imageCredit.split(/(https?:\/\/[^\s|]+)/g).map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</figcaption>}</figure>
     <div className="article-content-layout">

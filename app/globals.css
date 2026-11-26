@@ -351,3 +351,9 @@ body[data-theme="dark"] .article-page .article-body .more-related-stories{border
 
 .article-page .article-image{width:min(100%,960px);margin-inline:auto}
 .article-page .article-image>.article-cover{height:auto;aspect-ratio:auto;max-height:clamp(260px,57vh,520px);object-fit:contain}
+
+.article-share{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.article-share a{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #d5d7e5;border-radius:6px;color:#33319c;font-size:13px;font-weight:600;line-height:1.4;text-decoration:none}
+.article-share a:hover,.article-share a:focus-visible{border-color:currentColor;text-decoration:underline}
+.article-heading .article-share{margin-top:16px}
+body[data-theme="dark"] .article-page .article-share a{border-color:#56577c;color:#c0beff}
