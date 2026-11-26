@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {database} from '../../../lib/cms/db';
-import {featuredMatch,parseCricbuzzScore,parseFeaturedScore,type FeaturedScore} from '../../../lib/featured-score';
+import {featuredMatch,featuredScoreRefreshMinutes,parseCricbuzzScore,parseFeaturedScore,type FeaturedScore} from '../../../lib/featured-score';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -32,7 +32,7 @@ async function scoreResponse(refresh:boolean){
    SET attempts=ARRAY(SELECT t FROM unnest(attempts) AS a(t) WHERE t>now()-${window}::interval) || ARRAY[now()]
    WHERE match_id=${id}
     AND COALESCE(snapshot->>'complete','false')<>'true'
-    AND COALESCE(attempts[cardinality(attempts)],'-infinity'::timestamptz)<=now()-interval '15 minutes'
+    AND COALESCE(attempts[cardinality(attempts)],'-infinity'::timestamptz)<=now()-make_interval(mins => ${featuredScoreRefreshMinutes})
     AND (SELECT count(*) FROM unnest(attempts) AS a(t) WHERE t>now()-${window}::interval)<${limit}
    RETURNING match_id
   `:[];

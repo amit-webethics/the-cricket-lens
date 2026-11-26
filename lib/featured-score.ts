@@ -1,3 +1,5 @@
+export const featuredScoreRefreshMinutes = 15;
+
 export const featuredMatch = {
  id:177210,
  title:'India A vs Sri Lanka A',

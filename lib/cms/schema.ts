@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {DEFAULT_BRAND_COLOR,brandColorPattern} from '../brand-color';
 import {sanitizeNewsHtml,richTextToPlain} from './rich-text';
 import {wordCount,NEWS_SUMMARY_MAX} from './news';
 import {sourceReferencesSchema} from './source-reference';
@@ -17,7 +18,7 @@ const news=z.object({...common,...schedule,...seo,description:z.string().max(500
 const category=z.object({...common,description:z.string().max(600).default('')});
 const author=z.object({...common,bio:z.string().max(2000).default(''),role:z.string().max(100).default(''),imageUrl:safeUrl.default('')});
 const page=z.object({...common,...seo,intro:z.string().max(700).default(''),sections:z.array(section).min(1).max(40)});
-const settings=z.object({...common,siteName:z.string().min(1).max(100),tagline:z.string().max(200),contactEmail:z.union([z.email(),z.literal('')]),correctionsEmail:z.union([z.email(),z.literal('')]),operatorName:z.string().max(200).default(''),socialUrl:safeUrl.default(''),seoTitle:z.string().max(70).default(''),seoDescription:z.string().max(180).default('')});
+const settings=z.object({...common,brandColor:z.string().trim().regex(brandColorPattern,'Enter a six-digit brand colour such as #33319c').transform(value=>value.toLowerCase()).default(DEFAULT_BRAND_COLOR),siteName:z.string().min(1).max(100),tagline:z.string().max(200),contactEmail:z.union([z.email(),z.literal('')]),correctionsEmail:z.union([z.email(),z.literal('')]),operatorName:z.string().max(200).default(''),socialUrl:safeUrl.default(''),seoTitle:z.string().max(70).default(''),seoDescription:z.string().max(180).default('')});
 export const schemas={articles:article,news,categories:category,authors:author,pages:page,settings};
 export type Entry={id:string;kind:Kind;title:string;slug:string;status:'draft'|'scheduled'|'published'|'archived';data:Record<string,any>;revision:number;createdAt:string;updatedAt:string;publishedAt:string|null};
 export const slugify=(s:string)=>s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
