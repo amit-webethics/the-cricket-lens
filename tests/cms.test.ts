@@ -8,10 +8,11 @@ import {selectRelatedStories} from '../lib/cms/related-stories';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {scryptSync} from 'node:crypto';
+import {createHmac,scryptSync} from 'node:crypto';
 import {PGlite} from '@electric-sql/pglite';
 import {NextRequest} from 'next/server';
 import {createContentStore} from '../lib/cms/db';
+import {handleInstagram} from '../lib/cms/instagram';
 import {login,validSession,hash,verifyPassword} from '../lib/cms/auth';
 import {GET,POST} from '../app/api/admin/[...path]/route';
 let engine:PGlite;let sql:any;let store:ReturnType<typeof createContentStore>;let category:any;let author:any;let article:any;let token:string;
@@ -19,6 +20,37 @@ let engine:PGlite;let sql:any;let store:ReturnType<typeof createContentStore>;le
 // WASM engine in process. It does not mock query results or require network sockets.
 function adapter(db:any){const query:any=async(strings:TemplateStringsArray,...values:any[])=>{let text=strings[0];for(let i=0;i<values.length;i++)text+=`$${i+1}`+strings[i+1];return (await db.query(text,values)).rows;};query.json=(v:any)=>JSON.stringify(v);query.begin=(fn:any)=>db.transaction((tx:any)=>fn(adapter(tx)));return query;}
 const salt='test-only-salt';const origin='http://localhost:4173';
+
+test('Instagram retries check the same container before publishing again', async t => {
+ const accessToken='test-only-instagram-token';
+ const previous=process.env.INSTAGRAM_ACCESS_TOKEN;
+ process.env.INSTAGRAM_ACCESS_TOKEN=accessToken;
+ t.after(()=>{if(previous===undefined)delete process.env.INSTAGRAM_ACCESS_TOKEN;else process.env.INSTAGRAM_ACCESS_TOKEN=previous;});
+
+ const accountId='17841412345678901';
+ const containerId='17841412345678902';
+ const proof=createHmac('sha256',accessToken).update(`instagram-publish:${accountId}:${containerId}`).digest('hex');
+ const publish=()=>handleInstagram(new Request(`${origin}/api/admin/instagram/publish`,{
+  method:'POST',body:JSON.stringify({accountId,containerId,proof}),
+ }),['publish']);
+
+ let posted=false;
+ const fetchGraph=t.mock.method(globalThis,'fetch',async (input:URL,init:RequestInit)=>{
+  assert.equal(input.hostname,'graph.instagram.com');
+  if(init.method==='POST'){
+   assert.equal(input.pathname,`/v27.0/${accountId}/media_publish`);
+   assert.equal(String(init.body),`creation_id=${containerId}`);
+   posted=true;
+   throw new Error('Connection closed after Meta accepted the publish');
+  }
+  assert.equal(input.pathname,`/v27.0/${containerId}`);
+  return Response.json({status_code:posted?'PUBLISHED':'FINISHED'});
+ });
+
+ assert.equal((await publish()).status,502);
+ assert.deepEqual(await publish(),{status:200,data:{status:'PUBLISHED'}});
+ assert.equal(fetchGraph.mock.callCount(),3);
+});
 const route=(method:string,path:string,body?:unknown,requestOrigin=origin)=>{const req=new NextRequest(`${origin}/api/admin/${path}`,{method,headers:{...(body?{'content-type':'application/json'}:{}),origin:requestOrigin},...(body?{body:JSON.stringify(body)}:{})});return ({GET,POST} as any)[method](req,{params:Promise.resolve({path:path.split('/')})});};
 before(async()=>{engine=await PGlite.create();await engine.exec(await readFile(join(process.cwd(),'db/001_cms.sql'),'utf8'));sql=adapter(engine);store=createContentStore(sql);process.env.DATABASE_URL='postgresql://test-only-unconnected';process.env.ADMIN_EMAIL='editor@example.com';process.env.ADMIN_PASSWORD_HASH=`scrypt:${salt}:${scryptSync('correct-test-password',salt,64).toString('hex')}`;});
 after(async()=>{await engine?.close();});
