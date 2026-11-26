@@ -352,8 +352,15 @@ body[data-theme="dark"] .article-page .article-body .more-related-stories{border
 .article-page .article-image{width:min(100%,960px);margin-inline:auto}
 .article-page .article-image>.article-cover{height:auto;aspect-ratio:auto;max-height:clamp(260px,57vh,520px);object-fit:contain}
 
-.article-share{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-.article-share a{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #d5d7e5;border-radius:6px;color:#33319c;font-size:13px;font-weight:600;line-height:1.4;text-decoration:none}
-.article-share a:hover,.article-share a:focus-visible{border-color:currentColor;text-decoration:underline}
+.article-share{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.article-share .article-social-icon,.admin-table .article-social-icon{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid transparent;border-radius:8px;color:#fff;text-decoration:none;transition:filter .15s,border-color .15s}
+.article-social-icon svg{width:19px;height:19px;display:block}
+.article-social-icon.facebook{background:#315793}
+.article-social-icon.facebook svg{width:24px;height:24px}
+.article-social-icon.x{background:#080808}
+.article-social-icon.instagram{background:#a63273}
+.article-social-icon:hover{filter:brightness(1.16)}
+.article-social-icon:focus-visible{outline:2px solid #4b48b6;outline-offset:3px}
 .article-heading .article-share{margin-top:16px}
-body[data-theme="dark"] .article-page .article-share a{border-color:#56577c;color:#c0beff}
+body[data-theme="dark"] .article-page .article-social-icon.x{border-color:#6b7082}
+body[data-theme="dark"] .article-page .article-social-icon:focus-visible{outline-color:#c0beff}

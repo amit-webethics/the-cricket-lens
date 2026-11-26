@@ -2,6 +2,7 @@
 
 import {useEffect, useRef, useState} from 'react';
 import {useSearchParams} from 'next/navigation';
+import {ExternalLink, Image as ImageIcon, Instagram, Upload} from 'lucide-react';
 import {api} from './AdminShell';
 
 type Article = {id: string; title: string; slug: string; description: string; cover: string};
@@ -22,7 +23,7 @@ export default function InstagramComposer() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [alt, setAlt] = useState('');
   const [prepared, setPrepared] = useState<Prepared | null>(null);
-  const [published, setPublished] = useState<{permalink?: string} | null>(null);
+  const [published, setPublished] = useState<{permalink?: string; image: string} | null>(null);
   const [busy, setBusy] = useState(false);
   const operation = useRef(false);
   const lastUpload = useRef<{file: File; alt: string; id: string; url: string} | null>(null);
@@ -30,7 +31,7 @@ export default function InstagramComposer() {
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const selected = articles.find(article => article.id === articleId);
-  const image = prepared?.image || previewUrl || selected?.cover || '';
+  const image = published?.image || prepared?.image || previewUrl || selected?.cover || '';
 
   useEffect(() => {
     let active = true;
@@ -129,7 +130,7 @@ export default function InstagramComposer() {
     savePrepared({...prepared, attempted: true});
     const post = await api('instagram/publish', {method: 'POST', body: JSON.stringify({containerId, accountId, proof})});
     if (post.status === 'PUBLISHED') {
-      setPublished({permalink: post.permalink});
+      setPublished({permalink: post.permalink, image: prepared.image});
       savePrepared(null);
     } else if (post.status === 'IN_PROGRESS') {
       setNotice('Instagram is still preparing the image. Check this post again in about a minute.');
@@ -162,29 +163,37 @@ export default function InstagramComposer() {
       <div className="admin-instagram-grid">
         <section className="admin-panel admin-form-panel" aria-labelledby="instagram-compose-title">
           <div className="admin-panel-heading"><h2 id="instagram-compose-title">{prepared ? 'Review prepared post' : 'Compose post'}</h2></div>
-          <div className="admin-fields">
-            <label>Blog article
-              <select value={articleId} disabled={busy || !!prepared || !!published} onChange={event => {
-                const id = event.target.value;
-                setArticleId(id);
-                setCaption(initialCaption(articles.find(article => article.id === id)));
-                setFile(null);
-                setAlt('');
-              }}>
-                <option value="">Choose a published article</option>
-                {articles.map(article => <option key={article.id} value={article.id}>{article.title}</option>)}
-              </select>
-            </label>
-            {selected && <a className="admin-inline-link" href={`/articles/${selected.slug}/`} target="_blank" rel="noreferrer">Open article ↗</a>}
+          <div className="admin-fields admin-instagram-fields">
+            <div className="admin-instagram-article">
+              <label htmlFor="instagram-article">Blog article</label>
+              <div className="admin-instagram-article-row">
+                <select id="instagram-article" value={articleId} disabled={busy || !!prepared || !!published} onChange={event => {
+                  const id = event.target.value;
+                  setArticleId(id);
+                  setCaption(initialCaption(articles.find(article => article.id === id)));
+                  setFile(null);
+                  setAlt('');
+                }}>
+                  <option value="">Choose a published article</option>
+                  {articles.map(article => <option key={article.id} value={article.id}>{article.title}</option>)}
+                </select>
+                {selected && <a className="admin-instagram-open" href={`/articles/${selected.slug}/`} target="_blank" rel="noreferrer" aria-label="Open article in a new tab" title="Open article"><ExternalLink size={16} aria-hidden="true"/></a>}
+              </div>
+            </div>
             <label>Caption
-              <textarea value={caption} onChange={event => setCaption(event.target.value)} rows={7} maxLength={2200} readOnly={!!prepared || !!published || busy}/>
-              <small>{caption.length} / 2,200 characters</small>
+              <textarea value={caption} onChange={event => setCaption(event.target.value)} rows={7} maxLength={2200} readOnly={!!prepared || !!published || busy} aria-describedby="instagram-character-count"/>
+              <small id="instagram-character-count" className="admin-instagram-count">{caption.length} / 2,200 characters</small>
             </label>
-            {!prepared && !published && <label>
-              {selected?.cover ? 'Replace the article cover for this post' : 'Upload a photo'}
-              <input type="file" accept="image/jpeg,.jpg,.jpeg" disabled={busy || !selected} onChange={event => setFile(event.target.files?.[0] || null)}/>
-              <small>JPEG under 2 MB. The upload is used for this post.</small>
-            </label>}
+            {!prepared && !published && <div className="admin-instagram-upload">
+              <input key={articleId} className="sr-only" id="instagram-image" type="file" accept="image/jpeg,.jpg,.jpeg" disabled={busy || !selected} aria-describedby="instagram-image-hint" onChange={event => setFile(event.target.files?.[0] || null)}/>
+              <label htmlFor="instagram-image" className="admin-instagram-drop">
+                <Upload size={17} aria-hidden="true"/>
+                <span><strong>{selected?.cover ? 'Replace cover image' : 'Upload a photo'}</strong>
+                  <small>{file?.name || (selected?.cover ? 'Using the article cover' : 'Choose an image for this post')}</small>
+                </span>
+              </label>
+              <small id="instagram-image-hint">JPEG under 2 MB</small>
+            </div>}
             {file && !prepared && !published && <label>Alternative text
               <input maxLength={250} value={alt} onChange={event => setAlt(event.target.value)} disabled={busy}/>
             </label>}
@@ -213,9 +222,19 @@ export default function InstagramComposer() {
           </div>
         </section>
         <section className="admin-panel admin-form-panel" aria-labelledby="instagram-preview-title">
-          <div className="admin-panel-heading"><h2 id="instagram-preview-title">Post preview</h2></div>
-          {image && <img src={image} alt="" className="admin-instagram-photo" referrerPolicy="no-referrer"/>}
-          <p className="admin-instagram-caption">{caption || 'Choose an article to start your post.'}</p>
+          <div className="admin-panel-heading"><h2 id="instagram-preview-title"><Instagram size={16} aria-hidden="true"/>Post preview</h2></div>
+          <div className="admin-instagram-preview-body">
+            <div className="admin-instagram-preview-card">
+              <div className="admin-instagram-preview-account">
+                <span className="admin-instagram-avatar"><Instagram size={18} aria-hidden="true"/></span>
+                <strong>{account ? `@${account.username}` : 'The Cricket Lens'}</strong>
+              </div>
+              {image ? <img src={image} alt={file && alt.trim() ? alt : 'Post photo preview'} className="admin-instagram-photo" referrerPolicy="no-referrer"/> : (
+                <div className="admin-instagram-placeholder"><ImageIcon size={25} aria-hidden="true"/><span>Your post image will appear here</span></div>
+              )}
+              <p className={caption ? 'admin-instagram-caption' : 'admin-instagram-caption empty'}>{caption || 'Choose an article to start your post.'}</p>
+            </div>
+          </div>
         </section>
       </div>
     )}
