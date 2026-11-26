@@ -1,6 +1,7 @@
 import postgres from 'postgres';
 import {Kind,Entry,schemas} from './schema';
 import type {ArticleGroupFields} from './article-groups';
+import type {importedArticleContent} from './draft-markdown';
 let client:ReturnType<typeof postgres>|undefined;
 export function database(){if(!process.env.DATABASE_URL)throw new Error('DATABASE_NOT_CONFIGURED');return client??=postgres(process.env.DATABASE_URL,{max:3,idle_timeout:20,connect_timeout:10,prepare:false});}
 export async function closeDatabase(){if(client){await client.end();client=undefined;}}
@@ -54,6 +55,30 @@ async function existingArticleSlugs(slugs:string[]){
  return rows.map(row=>String(row.slug));
 }
 
+async function articleImportMatches(slugs:string[]){
+ return sql<Pick<Entry,'id'|'slug'|'title'|'status'|'revision'>[]>`
+  SELECT id,slug,title,status,revision FROM cms_records WHERE kind='articles'
+  AND slug IN (SELECT jsonb_array_elements_text(${sql.json(slugs)}::jsonb))`;
+}
+
+async function updateImportedArticles(updates:{slug:string;revision:number;content:ReturnType<typeof importedArticleContent>}[]){
+ return transact(async tx=>{
+  const rows=await tx<Pick<Entry,'id'|'slug'|'title'|'status'>[]>`
+   WITH desired AS (
+    SELECT * FROM jsonb_to_recordset(${tx.json(updates)}::jsonb) AS p(slug text,revision integer,content jsonb)
+   ), eligible AS MATERIALIZED (
+    SELECT a.id, d.content FROM cms_records a JOIN desired d ON d.slug=a.slug AND d.revision=a.revision
+    WHERE a.kind='articles' ORDER BY a.id FOR UPDATE OF a
+   )
+   UPDATE cms_records a SET title=e.content->>'title', data=a.data || e.content,
+    revision=a.revision+1, updated_at=now()
+   FROM eligible e WHERE a.id=e.id AND (SELECT count(*) FROM eligible)=${updates.length}
+   RETURNING a.id,a.slug,a.title,a.status`;
+  if(rows.length!==updates.length)throw new Error('EDIT_CONFLICT');
+  return rows;
+ });
+}
+
 async function importArticleDrafts(articles:Record<string,unknown>[],categoryId:string,authorId:string){
  const drafts=articles.map(article=>schemas.articles.parse({
   ...article,categoryId,authorId,status:'draft',scheduledAt:'',verified:false,featured:false,articleRole:'standalone',
@@ -75,7 +100,7 @@ async function importArticleDrafts(articles:Record<string,unknown>[],categoryId:
  });
 }
 
-return {listEntries,saveEntry,existingArticleSlugs,importArticleDrafts};}
+return {listEntries,saveEntry,existingArticleSlugs,articleImportMatches,importArticleDrafts,updateImportedArticles};}
 export async function publishDueEntries(){const sql=database();const rows=await sql`UPDATE cms_records SET status='published',data=jsonb_set(data,'{status}','\"published\"'::jsonb),revision=revision+1,updated_at=now(),published_at=now() WHERE kind IN ('articles','news') AND status='scheduled' AND (data->>'scheduledAt')::timestamptz <= now() RETURNING id,kind,slug,title`;return rows.map(r=>({id:r.id,kind:r.kind,slug:r.slug,title:r.title}));}
 export const listEntries=(kind:Kind,publicOnly=false)=>createContentStore(database()).listEntries(kind,publicOnly);
 export const saveEntry=(kind:Kind,input:unknown,id?:string,revision?:number)=>createContentStore(database()).saveEntry(kind,input,id,revision);

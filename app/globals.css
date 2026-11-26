@@ -348,3 +348,6 @@ body[data-theme="dark"] .article-group-links a{color:#b9b7ff}
 .article-page .article-body .more-related-stories{margin:0;padding:18px 0 0;border-top:1px solid #e3e5ef}
 .article-page .article-body .article-author-bio{font-size:14px;line-height:1.7;margin:0 0 16px}
 body[data-theme="dark"] .article-page .article-body .more-related-stories{border-color:#383f56}
+
+.article-page .article-image{width:min(100%,960px);margin-inline:auto}
+.article-page .article-image>.article-cover{height:auto;aspect-ratio:auto;max-height:clamp(260px,57vh,520px);object-fit:contain}

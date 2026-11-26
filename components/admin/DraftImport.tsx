@@ -16,12 +16,13 @@ import type {Entry} from '../../lib/cms/schema';
 type Preview = {
   series: string;
   articles: (MarkdownArticle & {slug: string; minutes: number})[];
-  existingSlugs: string[];
+  matches: Pick<Entry, 'id' | 'slug' | 'title' | 'status' | 'revision'>[];
 };
 
 type ImportResult = {
   imported: Pick<Entry, 'id' | 'slug' | 'title'>[];
   skipped: Pick<Entry, 'slug' | 'title'>[];
+  updated?: Pick<Entry, 'id' | 'slug' | 'title' | 'status'>[];
 };
 
 export default function DraftImport() {
@@ -29,6 +30,7 @@ export default function DraftImport() {
   const [authors, setAuthors] = useState<Entry[]>([]);
   const [categoryId, setCategoryId] = useState('');
   const [authorId, setAuthorId] = useState('');
+  const [mode, setMode] = useState<'create' | 'update'>('create');
   const [file, setFile] = useState<File | null>(null);
   const [markdown, setMarkdown] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -57,7 +59,7 @@ export default function DraftImport() {
 
   async function previewFile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file || !categoryId || !authorId || busy) return;
+    if (!readyToPreview || !file) return;
     setPreview(null);
     setResult(null);
     setError('');
@@ -71,12 +73,12 @@ export default function DraftImport() {
       const text = await file.text();
       const next: Preview = await api('articles/import', {
         method: 'POST',
-        body: JSON.stringify({action: 'preview', markdown: text, categoryId, authorId}),
+        body: JSON.stringify({action: 'preview', markdown: text, mode, ...(mode === 'create' ? {categoryId, authorId} : {})}),
       });
-      const existing = new Set(next.existingSlugs);
+      const existing = new Set(next.matches.map(article => article.slug));
       setMarkdown(text);
       setPreview(next);
-      setSelected(next.articles.filter(article => !existing.has(article.slug)).map(article => article.slug));
+      setSelected(next.articles.filter(article => mode === 'update' ? existing.has(article.slug) : !existing.has(article.slug)).map(article => article.slug));
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to preview this file.');
     } finally {
@@ -85,13 +87,18 @@ export default function DraftImport() {
   }
 
   async function importSelected() {
-    if (!preview || !selected.length || !categoryId || !authorId || busy) return;
+    if (!preview || !selected.length || !readyToPreview) return;
     setBusy('import');
     setError('');
     try {
       const saved: ImportResult = await api('articles/import', {
         method: 'POST',
-        body: JSON.stringify({action: 'import', markdown, categoryId, authorId, slugs: selected}),
+        body: JSON.stringify({
+          action: 'import', markdown, mode, slugs: selected,
+          ...(mode === 'update'
+             ? {revisions: Object.fromEntries(preview.matches.filter(article => selected.includes(article.slug)).map(article => [article.slug, article.revision]))}
+             : {categoryId, authorId}),
+        }),
       });
       setResult(saved);
       setPreview(null);
@@ -103,15 +110,15 @@ export default function DraftImport() {
     }
   }
 
-  const existingSlugs = new Set(preview?.existingSlugs);
-  const readyToPreview = !!file && !!categoryId && !!authorId && !busy;
+  const matches = new Map(preview?.matches.map(article => [article.slug, article]));
+  const readyToPreview = !!file && (mode === 'update' || (!!categoryId && !!authorId)) && !busy;
 
   return <>
     <div className="admin-page-heading">
       <div>
         <Link href="/admin/articles/" className="admin-inline-link"><ArrowLeft size={15}/> Blog articles</Link>
-        <h1>Import article drafts</h1>
-        <p>Upload a Markdown file, review the articles, and save the ones you select as drafts.</p>
+        <h1>Import articles</h1>
+        <p>Upload a Markdown file to create drafts or update existing articles by URL slug.</p>
       </div>
       <a
         className="admin-secondary"
@@ -123,6 +130,19 @@ export default function DraftImport() {
     <section className="admin-panel admin-form-panel" aria-labelledby="import-file-heading">
       <div className="admin-panel-heading"><h2 id="import-file-heading">Choose a file</h2></div>
       <form onSubmit={previewFile} className="admin-fields">
+        <label>
+          <span className="admin-field-label">Import mode</span>
+          <select value={mode} disabled={!!busy} onChange={event => {
+            setMode(event.target.value === 'update' ? 'update' : 'create');
+            setPreview(null);
+            setResult(null);
+            setError('');
+          }}>
+            <option value="create">Create new drafts</option>
+            <option value="update">Update existing articles</option>
+          </select>
+        </label>
+        {mode === 'update' && <p className="admin-help">Updates apply to the existing article. Published articles are updated on the live site.</p>}
         <label>
           <span className="admin-field-label">Markdown file</span>
           <input
@@ -139,7 +159,7 @@ export default function DraftImport() {
           />
           <small>.md files up to 500 KB, with up to {MAX_DRAFT_IMPORT_ARTICLES} articles per file.</small>
         </label>
-        <div className="admin-two-fields">
+        {mode === 'create' && <><div className="admin-two-fields">
           <label>
             <span className="admin-field-label">Category for imported drafts</span>
             <select value={categoryId} onChange={event => setCategoryId(event.target.value)} disabled={loading || !!busy} required>
@@ -156,10 +176,10 @@ export default function DraftImport() {
           </label>
         </div>
         {!loading && (!categories.length || !authors.length) &&
-          <p className="admin-help">An active <Link href="/admin/categories/">category</Link> and <Link href="/admin/authors/">author</Link> are required.</p>}
+          <p className="admin-help">An active <Link href="/admin/categories/">category</Link> and <Link href="/admin/authors/">author</Link> are required.</p>}</>}
         <div>
           <button type="submit" className="admin-primary" disabled={!readyToPreview}>
-            <FileUp size={16}/>{busy === 'preview' ? 'Reading file…' : 'Preview drafts'}
+            <FileUp size={16}/>{busy === 'preview' ? 'Reading file…' : 'Preview articles'}
           </button>
         </div>
       </form>
@@ -175,13 +195,14 @@ export default function DraftImport() {
       <div className="admin-fields">
         {preview.series && <p className="admin-help">Series or tournament <strong>{preview.series}</strong></p>}
         {preview.articles.map(article => {
-          const exists = existingSlugs.has(article.slug);
+          const match = matches.get(article.slug);
+          const eligible = mode === 'update' ? !!match : !match;
           return <article key={article.slug} className="admin-section-editor">
             <label className="admin-check">
               <input
                 type="checkbox"
                 checked={selected.includes(article.slug)}
-                disabled={exists || !!busy}
+                disabled={!eligible || !!busy}
                 onChange={event => {
                   const checked = event.target.checked;
                   setSelected(current => checked ? [...current, article.slug] : current.filter(slug => slug !== article.slug));
@@ -191,10 +212,10 @@ export default function DraftImport() {
             </label>
             <p className="admin-help">
               /{article.slug} · {article.minutes} min · {article.sources.length} {article.sources.length === 1 ? 'source' : 'sources'}
-              {exists && ' · URL slug already in use'}
+              {mode === 'update' ? (match ? ` · Update ${match.status} article` : ' · No matching URL slug') : match && ' · URL slug already in use'}
             </p>
             <details className="admin-import-preview">
-              <summary>Read draft</summary>
+              <summary>Read imported content</summary>
               <p>{article.description}</p>
               {article.sections.map((section, index) => <section key={index}>
                 <h3>{section.heading}</h3>
@@ -207,8 +228,8 @@ export default function DraftImport() {
           </article>;
         })}
         <div>
-          <button type="button" className="admin-primary" disabled={!selected.length || !categoryId || !authorId || !!busy} onClick={importSelected}>
-            {busy === 'import' ? 'Saving drafts…' : `Import ${selected.length} selected as drafts`}
+          <button type="button" className="admin-primary" disabled={!selected.length || !readyToPreview} onClick={importSelected}>
+            {busy === 'import' ? 'Saving articles…' : mode === 'update' ? `Update ${selected.length} selected articles` : `Import ${selected.length} selected as drafts`}
           </button>
         </div>
       </div>
@@ -217,10 +238,10 @@ export default function DraftImport() {
     {result && <section className="admin-panel admin-form-panel admin-import-result" aria-labelledby="import-result-heading">
       <div className="admin-panel-heading"><h2 id="import-result-heading">Import complete</h2></div>
       <div className="admin-fields">
-        <p role="status">{result.imported.length} {result.imported.length === 1 ? 'draft created' : 'drafts created'}.
+        <p role="status">{result.updated ? `${result.updated.length} ${result.updated.length === 1 ? 'article' : 'articles'} updated.` : `${result.imported.length} ${result.imported.length === 1 ? 'draft created' : 'drafts created'}.`}
           {result.skipped.length > 0 && ` ${result.skipped.length} skipped because their URL slugs were already in use.`}
         </p>
-        {result.imported.map(({id, title}) => <Link key={id} className="admin-inline-link" href={`/admin/articles/edit/?id=${id}`}>{title}</Link>)}
+        {(result.updated ?? result.imported).map(({id, title}) => <Link key={id} className="admin-inline-link" href={`/admin/articles/edit/?id=${id}`}>{title}</Link>)}
         {result.skipped.map(({slug, title}) => <p key={slug} className="admin-help">Skipped {title} (/{slug})</p>)}
         <Link href="/admin/articles/" className="admin-inline-link">View all blog articles</Link>
       </div>

@@ -3,6 +3,7 @@ import {fillEditorFromSource} from '../lib/cms/editor-source';
 import {classifyStory,suggestDraftMetadata} from '../lib/cms/story-suggestions';
 import {draftMarkdownTemplate,parseDraftMarkdown} from '../lib/cms/draft-markdown';
 import {indexArticleGroups} from '../lib/cms/article-groups';
+import {importedArticleContent} from '../lib/cms/draft-markdown';
 import {selectRelatedStories} from '../lib/cms/related-stories';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -50,6 +51,26 @@ test('PostgreSQL admin publishing lifecycle',async t=>{
   assert.deepEqual((await store.existingArticleSlugs([newSlug,'missing-slug'])),[newSlug]);
  });
  await t.test('active article references cannot be archived',async()=>{await assert.rejects(store.saveEntry('categories',{...category.data,status:'archived'},category.id,category.revision),/used by articles/);});
+ await t.test('markdown updates are atomic and retain the existing article settings',async()=>{
+  const [matched]=await store.articleImportMatches([article.slug]);
+  const [draft]=parseDraftMarkdown(draftMarkdownTemplate).articles;
+  const content=importedArticleContent({...draft,minutes:5});
+  await assert.rejects(store.updateImportedArticles([
+   {slug:article.slug,revision:matched.revision,content},
+   {slug:'missing-article',revision:1,content},
+  ]),/EDIT_CONFLICT/);
+  const [unchanged]=await store.articleImportMatches([article.slug]);
+  assert.equal(unchanged.revision,matched.revision);
+  await store.updateImportedArticles([{slug:article.slug,revision:matched.revision,content}]);
+  const updated=(await store.listEntries('articles',true)).find(row=>row.slug===article.slug);
+  assert.equal(updated?.title,draft.title);
+  assert.equal(updated?.data.minutes,5);
+  assert.equal(updated?.data.authorId,article.data.authorId);
+  assert.equal(updated?.data.imageUrl,article.data.imageUrl);
+  assert.equal(updated?.publishedAt,article.publishedAt);
+  await store.saveEntry('articles',article.data,article.id,updated?.revision);
+  article=(await store.listEntries('articles',true)).find(row=>row.id===article.id)!;
+ });
  await t.test('child articles require a main and keep the relationship when the main is archived',async()=>{
   const base={...article.data,status:'draft',verified:false};
   const main=await store.saveEntry('articles',{...base,slug:'group-main',articleRole:'main'});

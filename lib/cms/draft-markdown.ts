@@ -59,6 +59,19 @@ export type MarkdownArticle = {
   sources: Source[];
 };
 
+export function importedArticleContent(article: MarkdownArticle & {minutes: number}) {
+  return {
+    title: article.title,
+    description: article.description,
+    sections: article.sections,
+    minutes: article.minutes,
+    ...(article.tags.length ? {tags: article.tags} : {}),
+    ...(article.sources.length ? {sources: article.sources} : {}),
+    ...(article.seoTitle === undefined ? {} : {seoTitle: article.seoTitle}),
+    ...(article.seoDescription === undefined ? {} : {seoDescription: article.seoDescription}),
+  };
+}
+
 function plainText(value: string) {
   return value.trim().replace(/(\*{1,2})([^*\n]+)\1/g, '$2');
 }
