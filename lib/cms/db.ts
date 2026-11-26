@@ -1,5 +1,6 @@
 import postgres from 'postgres';
 import {Kind,Entry,schemas} from './schema';
+import type {ArticleGroupFields} from './article-groups';
 let client:ReturnType<typeof postgres>|undefined;
 export function database(){if(!process.env.DATABASE_URL)throw new Error('DATABASE_NOT_CONFIGURED');return client??=postgres(process.env.DATABASE_URL,{max:3,idle_timeout:20,connect_timeout:10,prepare:false});}
 export async function closeDatabase(){if(client){await client.end();client=undefined;}}
@@ -12,12 +13,32 @@ async function requireActiveEditorialReferences(tx:postgres.TransactionSql,categ
  }
 }
 
+async function validateArticleGroup(tx:postgres.TransactionSql,data:ArticleGroupFields,id?:string){
+ const parentId=data.parentArticleId;
+ if(parentId&&parentId===id)throw new Error('Choose a different article as the main article');
+ const ids=[id,parentId].filter((value):value is string=>!!value);
+ if(!ids.length)return;
+ // Lock the current article and its prospective parent in the same order for every save.
+ const articles=await tx`SELECT id,data->>'articleRole' AS role FROM cms_records
+  WHERE kind='articles' AND id IN (SELECT value::uuid FROM jsonb_array_elements_text(${tx.json(ids)}::jsonb))
+  ORDER BY id FOR UPDATE`;
+ if(parentId&&!articles.some(article=>article.id===parentId&&article.role==='main')){
+  throw new Error('Choose an article that is saved as a main article');
+ }
+ if(id&&data.articleRole!=='main'&&articles.some(article=>article.id===id&&article.role==='main')){
+  const children=await tx`SELECT id FROM cms_records WHERE kind='articles'
+   AND data->>'articleRole'='child' AND data->>'parentArticleId'=${id} LIMIT 1`;
+  if(children.length)throw new Error('This entry still has child articles. Move or unlink them before changing its role.');
+ }
+}
+
 export function createContentStore(sql:ReturnType<typeof postgres>,inTransaction=false){
 const transact=inTransaction?((fn:any)=>fn(sql)) as typeof sql.begin:sql.begin.bind(sql);
 async function listEntries(kind:Kind,publicOnly=false){const rows=publicOnly?await sql`SELECT id,kind,title,slug,status,(data - 'sourceContent') AS data,revision,created_at,updated_at,published_at FROM cms_records WHERE kind=${kind} AND status='published' ORDER BY published_at DESC NULLS LAST,created_at DESC`:await sql`SELECT * FROM cms_records WHERE kind=${kind} ORDER BY updated_at DESC`;return rows.map(map);}
 async function saveEntry(kind:Kind,input:unknown,id?:string,revision?:number){const data=schemas[kind].parse(input) as Record<string,any>;return transact(async tx=>{
  // One transaction protects related-record checks and optimistic edit revisions.
  if(kind==='articles'||kind==='news')await requireActiveEditorialReferences(tx,data.categoryId,data.authorId);
+ if(kind==='articles')await validateArticleGroup(tx,data,id);
  if(['categories','authors'].includes(kind)&&id&&data.status!=='published'){await tx`SELECT id FROM cms_records WHERE id=${id} AND kind=${kind} FOR UPDATE`;const key=kind==='categories'?'categoryId':'authorId';const used=await tx`SELECT id FROM cms_records WHERE kind IN ('articles','news') AND data->>${key}=${id} AND status!='archived'`;if(used.length)throw new Error('This entry is used by articles or news. Reassign or archive those articles first.');}
  if((kind==='articles'||kind==='news')&&data.status==='scheduled'&&(!data.scheduledAt||Date.parse(data.scheduledAt)<=Date.now()))throw new Error('Choose a future scheduled time');
  if(kind==='settings'&&data.slug!=='site')throw new Error('The settings slug must be site');
@@ -35,7 +56,7 @@ async function existingArticleSlugs(slugs:string[]){
 
 async function importArticleDrafts(articles:Record<string,unknown>[],categoryId:string,authorId:string){
  const drafts=articles.map(article=>schemas.articles.parse({
-  ...article,categoryId,authorId,status:'draft',scheduledAt:'',verified:false,featured:false,
+  ...article,categoryId,authorId,status:'draft',scheduledAt:'',verified:false,featured:false,articleRole:'standalone',
  }));
  return transact(async tx=>{
   await requireActiveEditorialReferences(tx,categoryId,authorId);

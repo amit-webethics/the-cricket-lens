@@ -2,6 +2,7 @@ import {test,before,after} from 'node:test';
 import {fillEditorFromSource} from '../lib/cms/editor-source';
 import {classifyStory,suggestDraftMetadata} from '../lib/cms/story-suggestions';
 import {draftMarkdownTemplate,parseDraftMarkdown} from '../lib/cms/draft-markdown';
+import {indexArticleGroups} from '../lib/cms/article-groups';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -48,6 +49,21 @@ test('PostgreSQL admin publishing lifecycle',async t=>{
   assert.deepEqual((await store.existingArticleSlugs([newSlug,'missing-slug'])),[newSlug]);
  });
  await t.test('active article references cannot be archived',async()=>{await assert.rejects(store.saveEntry('categories',{...category.data,status:'archived'},category.id,category.revision),/used by articles/);});
+ await t.test('child articles require a main and keep the relationship when the main is archived',async()=>{
+  const base={...article.data,status:'draft',verified:false};
+  const main=await store.saveEntry('articles',{...base,slug:'group-main',articleRole:'main'});
+  const childData={...base,slug:'group-child',articleRole:'child',parentArticleId:main.id,childOrder:2};
+  const child=await store.saveEntry('articles',childData);
+  assert.equal(child.data.parentArticleId,main.id);
+  assert.equal(child.data.childOrder,2);
+  await assert.rejects(store.saveEntry('articles',{...childData,parentArticleId:article.id},child.id,child.revision),/saved as a main/);
+  await assert.rejects(store.saveEntry('articles',{...childData,parentArticleId:child.id},child.id,child.revision),/different article/);
+  await assert.rejects(store.saveEntry('articles',{...main.data,articleRole:'standalone'},main.id,main.revision),/still has child articles/);
+  const archived=await store.saveEntry('articles',{...main.data,status:'archived'},main.id,main.revision);
+  assert.equal(archived.status,'archived');
+  const reloaded=(await store.listEntries('articles')).find(record=>record.id===child.id);
+  assert.equal(reloaded?.data.parentArticleId,main.id);
+ });
  await t.test('unsafe content URLs and missing authors are rejected',async()=>{await assert.rejects(store.saveEntry('articles',{...article.data,slug:'bad-image',imageUrl:'javascript:alert(1)'}));await assert.rejects(store.saveEntry('articles',{...article.data,slug:'bad-author',authorId:'11111111-1111-4111-8111-111111111111'}),/active category and author/);});
  await t.test('news uses verified publishing workflow',async()=>{const draft=await store.saveEntry('news',{title:'Squad announcement',slug:'squad-announcement',status:'draft',summary:'An official squad update.',sourceLabel:'BCCI',sourceUrl:'https://www.bcci.tv/',team:'India',verified:false});assert.equal((await store.listEntries('news',true)).length,0);await assert.rejects(store.saveEntry('news',{...draft.data,status:'published'},draft.id,draft.revision));await store.saveEntry('news',{...draft.data,status:'published',verified:true},draft.id,draft.revision);assert.equal((await store.listEntries('news',true)).length,1);});
  await t.test('unpublishing removes articles from public results',async()=>{await store.saveEntry('articles',{...article.data,status:'draft'},article.id,article.revision);assert.equal((await store.listEntries('articles',true)).length,0);});
@@ -55,6 +71,19 @@ test('PostgreSQL admin publishing lifecycle',async t=>{
 });
 
 test('missing admin configuration fails closed even with a session token',async()=>{const saved=process.env.ADMIN_PASSWORD_HASH;try{delete process.env.ADMIN_PASSWORD_HASH;assert.equal(await validSession('a'.repeat(64),()=>{throw new Error('Database should not be queried')}),false);}finally{process.env.ADMIN_PASSWORD_HASH=saved;}});
+
+test('published article groups order child links and keep stories accessible without a published main',()=>{
+ const main={id:'main',articleRole:'main' as const};
+ const first={id:'first',articleRole:'child' as const,parentArticleId:'main',childOrder:1};
+ const second={id:'second',articleRole:'child' as const,parentArticleId:'main',childOrder:2};
+ const last={id:'last',articleRole:'child' as const,parentArticleId:'main'};
+ const standalone={id:'standalone'};
+ const groups=indexArticleGroups([last,second,main,standalone,first]);
+ assert.deepEqual(groups.topLevel,[main,standalone]);
+ assert.deepEqual(groups.childrenFor(main),[first,second,last]);
+ assert.equal(groups.mainFor(first),main);
+ assert.deepEqual(indexArticleGroups([standalone,first]).topLevel,[standalone,first]);
+});
 
 test('article Markdown imports preserve a series, table slugs, paragraphs and source URLs',()=>{
  const document=draftMarkdownTemplate.replace(
