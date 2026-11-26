@@ -1,0 +1,43 @@
+name: Verify brand favicon
+on:
+  push:
+    branches: [verify/brand-favicon]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEON_AUTH_BASE_URL: 'https://example.invalid/auth'
+      NEON_AUTH_COOKIE_SECRET: 'testing-only-cookie-secret-for-next-build'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Check favicon colours and validation
+        run: |
+          node --import tsx --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import { GET, generateStaticParams } from './app/site-icon/[color]/route.ts';
+          const get = color => GET(new Request('https://criclens.fundiffy.com'), { params: Promise.resolve({color}) });
+          const icon = await get('33319c');
+          assert.equal(icon.headers.get('content-type'), 'image/svg+xml');
+          assert.equal((await icon.text()).trim(), readFileSync('public/icon.svg', 'utf8').trim());
+          assert.deepEqual(generateStaticParams(), [{color:'33319c'}]);
+          const pale = await (await get('ffee99')).text();
+          assert.match(pale, /rx="25" fill="#ffee99"/);
+          assert.match(pale, /stroke="#000" stroke-width="7"/);
+          const dark = await (await get('184e35')).text();
+          assert.match(dark, /rx="25" fill="#184e35"/);
+          assert.match(dark, /stroke="#fff" stroke-width="7"/);
+          assert.equal((await get('bad-color')).status, 404);
+          NODE
+      - run: npm run build
+      - run: npm run build:review
