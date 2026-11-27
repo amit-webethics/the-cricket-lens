@@ -1,2 +1,7 @@
+import type {Metadata} from 'next';
+import {absoluteUrl} from '../lib/seo';
 import {Suspense} from 'react';import Home from '../components/Home';import {publicContent} from '../lib/cms/public';
+
+export const metadata: Metadata = {alternates: {canonical: absoluteUrl('/')}};
+
 export default async function Page(){const content=await publicContent();return <Suspense fallback={<main id="main" className="loading">Opening the Lens…</main>}><Home articles={content.articles} categories={content.categories} news={content.news.map(({details,newsSections,...item}:any)=>item)} sample={content.sample}/></Suspense>}

@@ -1,5 +1,5 @@
 import type {Metadata} from 'next';
-export const SITE_URL=(process.env.NEXT_PUBLIC_SITE_URL||'https://criclens.fundiffy.com').replace(/\/$/,'');
+export const SITE_URL=(process.env.NEXT_PUBLIC_SITE_URL||'https://thecriclens.com').replace(/\/$/,'');
 export function absoluteUrl(path:string){return new URL(path.startsWith('/')?path:'/'+path,SITE_URL).toString();}
 export function seoKeywords(item:{seoKeywords?:string|string[];tags?:string[];category?:string;series?:string}):string[]{const raw=Array.isArray(item.seoKeywords)?item.seoKeywords:typeof item.seoKeywords==='string'?item.seoKeywords.split(','):[];return [...new Set([...raw,...(item.tags||[]),item.series||'',item.category||''].map(x=>x.trim()).filter(Boolean))].slice(0,20);}
 export function storyMetadata(item:any,path:string,kind:'article'|'news'):Metadata{
