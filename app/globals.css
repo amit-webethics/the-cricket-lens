@@ -60,14 +60,14 @@ body{background:#f5f6fa}.shell{max-width:1480px;padding:0 32px;background:#fff}:
 .full-scorecard{grid-template-columns:1fr}.score-table-scroll{overflow-x:auto}.score-table-scroll table{min-width:560px}.innings .score-table-scroll th:not(:first-child),.innings .score-table-scroll td:not(:first-child){text-align:right}.dismissal{display:block;font-size:11px;color:#7b8090;font-weight:400;margin-top:4px}.innings-detail{padding:0 20px;color:#606879;font-size:12px;line-height:1.7}.full-scorecard .innings h3{font-size:15px}
 
 /* Article body text */
-.article-page .article-body h2{font-size:20px;line-height:1.35}
+.article-page .article-body h2{font-size:16px;line-height:1.35}
 .article-page .article-body section p,.article-page .article-body .draft-notice p,.article-page .article-body .source-note p{font-size:14px;line-height:1.8}
 .article-page .article-heading .standfirst,.article-page .article-body section p,.article-page .article-body .draft-notice p{text-align:justify}
 
 .news-detail-page{max-width:1050px;margin:0 auto}.news-detail-page>.article-body{max-width:760px;margin:0 auto}.news-read-more{display:inline-block;font-size:12px;color:var(--brand-ink);margin:4px 0 12px}
 
 .news-cover{max-width:760px;margin:24px auto}.news-cover img{display:block;width:100%;max-height:560px;object-fit:contain;background:#f5f6fa}.news-cover figcaption{font-size:12px;line-height:1.6;color:#62677c;margin-top:8px;overflow-wrap:anywhere}
-.news-formatted-content p,.news-formatted-content li{font-size:14px;line-height:1.8}.news-formatted-content h2{font-size:20px;line-height:1.4}.news-formatted-content h3{font-size:17px;line-height:1.4}.news-formatted-content ul,.news-formatted-content ol{padding-left:24px;margin:16px 0}.news-formatted-content ul{list-style:disc}.news-formatted-content ol{list-style:decimal}.news-formatted-content blockquote{border-left:3px solid var(--brand);margin:20px 0;padding:4px 0 4px 18px}.news-formatted-content a{color:var(--brand-ink);text-decoration:underline;overflow-wrap:anywhere}
+.news-formatted-content p,.news-formatted-content li{font-size:14px;line-height:1.8}.news-formatted-content h2{font-size:16px;line-height:1.4}.news-formatted-content h3{font-size:17px;line-height:1.4}.news-formatted-content ul,.news-formatted-content ol{padding-left:24px;margin:16px 0}.news-formatted-content ul{list-style:disc}.news-formatted-content ol{list-style:decimal}.news-formatted-content blockquote{border-left:3px solid var(--brand);margin:20px 0;padding:4px 0 4px 18px}.news-formatted-content a{color:var(--brand-ink);text-decoration:underline;overflow-wrap:anywhere}
 
 
 /* Compact news-style homepage layout */
